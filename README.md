@@ -7,6 +7,10 @@ Aplicación ToDoList de la asignatura [MADS](https://cvnet.cpd.ua.es/Guia-Docent
 
 https://trello.com/b/VZ3rTcpe/todolist-mads
 
+## DOCKER
+
+https://hub.docker.com/r/ivanlafont/mads-todolist
+
 ## Requisitos
 
 Necesitas tener instalado en tu sistema:
