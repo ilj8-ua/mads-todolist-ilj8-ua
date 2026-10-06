@@ -2,6 +2,11 @@
 
 Aplicación ToDoList de la asignatura [MADS](https://cvnet.cpd.ua.es/Guia-Docente/GuiaDocente/Index?wcodest=C203&wcodasi=34037&wlengua=es&scaca=2019-20) usando Spring Boot y plantillas Thymeleaf.
 
+
+## TRELLO
+
+https://trello.com/b/VZ3rTcpe/todolist-mads
+
 ## Requisitos
 
 Necesitas tener instalado en tu sistema:
