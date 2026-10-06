@@ -10,7 +10,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class UsuarioService {
@@ -71,5 +74,16 @@ public class UsuarioService {
         else {
             return modelMapper.map(usuario, UsuarioData.class);
         }
+    }
+
+    @Transactional(readOnly = true)
+    public List<UsuarioData> allUsuarios() {
+        logger.debug("Devolviendo todos los usuarios");
+        List<Usuario> usuarios = (List<Usuario>) usuarioRepository.findAll();
+        List<UsuarioData> usuariosData = usuarios.stream()
+                .map(usuario -> modelMapper.map(usuario, UsuarioData.class))
+                .collect(Collectors.toList());
+        Collections.sort(usuariosData, (a, b) -> a.getId().compareTo(b.getId()));
+        return usuariosData;
     }
 }

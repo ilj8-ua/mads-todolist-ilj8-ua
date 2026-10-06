@@ -9,8 +9,13 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.util.Arrays;
+import java.util.List;
+
+import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.containsString;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -92,5 +97,29 @@ public class UsuarioWebTest {
                         .param("eMail","ana.garcia@gmail.com")
                         .param("password","000"))
                 .andExpect(content().string(containsString("Contraseña incorrecta")));
+    }
+
+    @Test
+    public void listadoUsuariosDevuelveListaUsuarios() throws Exception {
+        // GIVEN
+        UsuarioData usuario1 = new UsuarioData();
+        usuario1.setId(1L);
+        usuario1.setEmail("ana.garcia@gmail.com");
+
+        UsuarioData usuario2 = new UsuarioData();
+        usuario2.setId(2L);
+        usuario2.setEmail("pedro.lopez@gmail.com");
+
+        List<UsuarioData> usuarios = Arrays.asList(usuario1, usuario2);
+        when(usuarioService.allUsuarios()).thenReturn(usuarios);
+
+        // WHEN, THEN
+        this.mockMvc.perform(get("/registrados"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(allOf(
+                        containsString("Listado de usuarios registrados"),
+                        containsString("ana.garcia@gmail.com"),
+                        containsString("pedro.lopez@gmail.com")
+                )));
     }
 }
