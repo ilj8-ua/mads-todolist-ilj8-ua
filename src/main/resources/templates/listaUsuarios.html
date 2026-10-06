@@ -20,12 +20,16 @@
                 <tr>
                     <th>Id</th>
                     <th>Correo electrónico</th>
+                    <th>Acción</th>
                 </tr>
                 </thead>
                 <tbody>
-                <tr th:each="usuario : ${usuarios}">
-                    <td th:text="${usuario.id}"></td>
-                    <td th:text="${usuario.email}"></td>
+                <tr th:each="usuarioItem : ${usuarios}">
+                    <td th:text="${usuarioItem.id}"></td>
+                    <td th:text="${usuarioItem.email}"></td>
+                    <td>
+                        <a class="btn btn-primary btn-xs" th:href="@{/registrados/{id}(id=${usuarioItem.id})}">Detalles</a>
+                    </td>
                 </tr>
                 </tbody>
             </table>

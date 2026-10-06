@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head th:replace="fragments :: head (titulo='Descripción de usuario')"></head>
+
+<body>
+<div th:replace="fragments :: navbar"></div>
+
+<div class="container-fluid mt-3">
+    <div class="row">
+        <div class="col-md-6">
+            <h2>Datos del usuario</h2>
+            <div class="card mt-3">
+                <div class="card-body">
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item"><strong>Id: </strong><span th:text="${usuarioConsultado.id}"></span></li>
+                        <li class="list-group-item"><strong>Nombre: </strong><span th:text="${usuarioConsultado.nombre != null ? usuarioConsultado.nombre : 'No especificado'}"></span></li>
+                        <li class="list-group-item"><strong>Correo electrónico: </strong><span th:text="${usuarioConsultado.email}"></span></li>
+                        <li class="list-group-item"><strong>Fecha de nacimiento: </strong><span th:text="${usuarioConsultado.fechaNacimiento != null ? #dates.format(usuarioConsultado.fechaNacimiento, 'dd/MM/yyyy') : 'No especificada'}"></span></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="mt-3">
+                <a class="btn btn-secondary" href="/registrados">Volver al listado</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div th:replace="fragments::javascript"/>
+
+</body>
+</html>

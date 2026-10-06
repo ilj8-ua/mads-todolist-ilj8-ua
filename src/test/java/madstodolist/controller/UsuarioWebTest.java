@@ -122,4 +122,36 @@ public class UsuarioWebTest {
                         containsString("pedro.lopez@gmail.com")
                 )));
     }
+
+    @Test
+    public void descripcionUsuarioDevuelveDatosUsuario() throws Exception {
+        // GIVEN
+        UsuarioData anaGarcia = new UsuarioData();
+        anaGarcia.setId(1L);
+        anaGarcia.setNombre("Ana García");
+        anaGarcia.setEmail("ana.garcia@gmail.com");
+        anaGarcia.setPassword("secreto123");
+
+        when(usuarioService.findById(1L)).thenReturn(anaGarcia);
+
+        // WHEN, THEN
+        this.mockMvc.perform(get("/registrados/1"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(allOf(
+                        containsString("Datos del usuario"),
+                        containsString("Ana García"),
+                        containsString("ana.garcia@gmail.com")
+                )))
+                .andExpect(content().string(org.hamcrest.Matchers.not(containsString("secreto123"))));
+    }
+
+    @Test
+    public void descripcionUsuarioDevuelveNotFoundSiNoExiste() throws Exception {
+        // GIVEN
+        when(usuarioService.findById(999L)).thenReturn(null);
+
+        // WHEN, THEN
+        this.mockMvc.perform(get("/registrados/999"))
+                .andExpect(status().isNotFound());
+    }
 }
