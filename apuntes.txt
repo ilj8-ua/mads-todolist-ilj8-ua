@@ -1,0 +1,1 @@
+no hace falta hacer en la capa controler TDD pero si seguir haciendo muchos test. Importante los test de integración. Dividir los test y los commits, que sean pequeños pero que cubran el máximo código posible -> MODULARIDAD. 10 test por funcionalidad estaría bien, no vale con hacer 2 o 3.
