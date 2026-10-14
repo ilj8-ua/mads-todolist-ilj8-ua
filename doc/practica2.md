@@ -8,77 +8,107 @@
 
 ## 1. Introducción y Objetivos
 
-Este documento recoge el resumen técnico de la evolución de la aplicación **ToDoList** durante la versión 1.1.0. El objetivo principal ha sido ampliar la funcionalidad de la plataforma permitiendo la navegación unificada en toda la aplicación, la consulta y visualización del directorio de usuarios registrados y la exposición detallada del perfil de cada usuario, manteniendo una arquitectura limpia desacoplada por capas (controlador, servicio, DTO y repositorio) y garantizando la cobertura de pruebas automatizadas en cada componente.
+Este documento recoge el resumen técnico de la evolución de la aplicación **ToDoList** durante la versión 1.1.0. Se han completado todas las historias de usuario obligatorias y opcionales:
+1. **Barra de menú**: Navegación unificada y responsiva en toda la aplicación.
+2. **Listado de usuarios**: Consulta del directorio de usuarios registrados.
+3. **Descripción de usuario**: Visualización detallada del perfil público de un usuario.
+4. **Usuario Administrador (opcional)**: Registro de un único administrador en el sistema con redirección directa a la administración de usuarios.
+5. **Protección de usuarios (opcional)**: Restricción del listado y de la descripción de usuarios exclusivamente al rol administrador.
+6. **Bloqueo de usuarios (opcional)**: Capacidad para que el administrador bloquee o habilite el acceso a la plataforma a cualquier usuario.
 
 ---
 
 ## 2. Nuevas Clases y Métodos Implementados
 
-Para estructurar las nuevas funcionalidades respetando el patrón de diseño establecido en Spring Boot, se han introducido y modificado las siguientes clases y métodos:
+### Capa de Modelo y DTOs (`madstodolist.model` y `madstodolist.dto`)
+* **`Usuario` y `UsuarioData`**:
+  * Incorporan los atributos booleanos `admin` y `bloqueado`, junto con sus respectivos getters (`isAdmin()`, `isBloqueado()`) y setters (`setAdmin(boolean)`, `setBloqueado(boolean)`).
+* **`RegistroData`**:
+  * Añade el campo booleano `admin` con sus métodos de acceso para capturar la opción de alta como administrador desde el formulario de registro.
 
-### Capa de Controladores (`madstodolist.controller`)
-* **`UsuarioController`**:
-  * `public String listadoUsuarios(Model model)`: Gestiona las peticiones `GET /registrados`. Si el usuario tiene sesión activa, recupera sus datos a través de `ManagerUserSession` para añadirlos al modelo y personalizar la barra de navegación; a continuación, obtiene la lista completa de usuarios registrados y delega la representación en la plantilla `listaUsuarios`.
-  * `public String descripcionUsuario(@PathVariable("id") Long idUsuario, Model model)`: Atiende las peticiones `GET /registrados/{id}`. Obtiene los datos del usuario identificado por `idUsuario`. En caso de no existir, lanza la excepción personalizada `UsuarioNotFoundException`. Si existe, inyecta el objeto DTO `usuarioConsultado` en el modelo y devuelve la vista `descripcionUsuario`.
-
-### Capa de Excepciones (`madstodolist.controller.exception`)
-* **`UsuarioNotFoundException`**: Excepción de tipo `RuntimeException` anotada con `@ResponseStatus(value = HttpStatus.NOT_FOUND, reason = "Usuario no encontrado")`. Permite que Spring devuelva de forma transparente una respuesta HTTP 404 cuando se solicita un identificador de usuario inexistente sin propagar errores no controlados.
-
-### Capa de Servicios y DTOs (`madstodolist.service` y `madstodolist.dto`)
+### Capa de Repositorios y Servicios (`madstodolist.repository` y `madstodolist.service`)
+* **`UsuarioRepository`**:
+  * `boolean existsByAdminTrue()`: Permite comprobar de forma optimizada en base de datos si ya existe un usuario con rol de administrador.
 * **`UsuarioService`**:
-  * `public List<UsuarioData> findAll()`: Consulta a través de `UsuarioRepository` la totalidad de las entidades de usuarios registradas en la base de datos y utiliza `ModelMapper` para convertirlas a una colección de objetos `UsuarioData`, ocultando detalles internos de la entidad persistente.
-  * `public UsuarioData findById(Long id)`: Busca un usuario por su identificador único y lo mapea a `UsuarioData` si está presente.
-* **`UsuarioData`**: Incluye los campos `id`, `nombre`, `email` y `fechaNacimiento`, permitiendo transferir únicamente la información requerida hacia la vista sin exponer contraseñas ni claves de acceso.
+  * `public enum LoginStatus`: Extendido con el estado `USER_BLOCKED` para identificar intentos de inicio de sesión de cuentas suspendidas.
+  * `public LoginStatus login(String eMail, String password)`: Valida credenciales y comprueba si la cuenta se encuentra bloqueada, devolviendo `USER_BLOCKED` en tal caso.
+  * `public boolean hayAdmin()`: Determina si ya existe un administrador en el sistema.
+  * `public UsuarioData registrar(UsuarioData usuario)`: Si se intenta registrar un usuario como administrador y ya existe uno en la base de datos, lanza `UsuarioServiceException`.
+  * `public void bloquearUsuario(Long idUsuario)` y `public void desbloquearUsuario(Long idUsuario)`: Modifican el estado de bloqueo de la entidad de forma transaccional.
+
+### Capa de Controladores y Excepciones (`madstodolist.controller` y `madstodolist.controller.exception`)
+* **`LoginController`**:
+  * `registroForm(Model model)`: Añade el atributo `hayAdmin` al modelo para mostrar el checkbox de administrador únicamente si no existe ninguno.
+  * `registroSubmit(...)`: Mapea el valor de `admin` desde `RegistroData` a `UsuarioData` y previene inconsistencias si ya existe un administrador.
+  * `loginSubmit(...)`: Redirige al administrador directamente a `/registrados`, o al usuario estándar a sus tareas (`/usuarios/{id}/tareas`). Maneja el estado `USER_BLOCKED` mostrando un mensaje de error explicativo en la vista.
+* **`UsuarioController`**:
+  * `private UsuarioData comprobarAdmin()`: Método auxiliar de seguridad que verifica que exista un usuario logeado y que tenga privilegios de administrador.
+  * `GET /registrados` y `GET /registrados/{id}`: Invocan `comprobarAdmin()`. Si el usuario no tiene permisos, se deniega el acceso lanzando las excepciones correspondientes.
+  * `POST /registrados/{id}/bloquear` y `POST /registrados/{id}/desbloquear`: Endpoints protegidos para cambiar el estado de acceso de los usuarios registrados y redirigir de vuelta al listado.
+* **`UsuarioNoAutorizadoException`**: Anotada con `@ResponseStatus(value = HttpStatus.UNAUTHORIZED, reason = "Usuario no autorizado")`, retornando el código HTTP 401 si un usuario sin rol de administrador intenta acceder a recursos protegidos.
+* **`UsuarioNotFoundException`**: Retorna el código HTTP 404 ante consultas de identificadores inexistentes.
 
 ---
 
 ## 3. Plantillas Thymeleaf Añadidas y Modificadas
 
 1. **`fragments.html`**:
-   * Se ha definido e integrado el fragmento `navbar`. Este componente genera una barra de navegación superior utilizando Bootstrap, visible en todas las páginas autenticadas y en la página informativa. Muestra enlaces a *ToDoList* (`/about`), *Tareas* (`/usuarios/{id}/tareas`) y un menú desplegable con el nombre del usuario y la opción de cerrar sesión (`/logout`). En caso de no haber sesión iniciada (como al visitar `/about` sin autenticar), presenta enlaces directos a *Login* y *Registro*.
-2. **`listaUsuarios.html`**:
-   * Presenta una tabla con la relación de usuarios del sistema (identificador y correo electrónico) e incorpora para cada fila un botón de acción (*Detalles*) que enlaza directamente a la vista individual `/registrados/{id}`.
-3. **`descripcionUsuario.html`**:
-   * Muestra mediante un componente de tarjeta (*Card*) los detalles del usuario consultado: identificador, nombre completo, correo electrónico y fecha de nacimiento formateada (`dd/MM/yyyy`). Añade un botón para regresar a la lista de registrados.
+   * Barra de navegación común (`navbar`) que incluye enlace a *Tareas* para usuarios autenticados, enlace directo a *Usuarios* (`/registrados`) si el usuario es administrador, y enlaces a *Login* y *Registro* para visitantes.
+2. **`formRegistro.html`**:
+   * Incluye condicionalmente (`th:if="${!hayAdmin}"`) el checkbox para solicitar el rol de administrador en el alta del usuario.
+3. **`listaUsuarios.html`**:
+   * Tabla con el listado de usuarios que muestra su estado (*Activo* o *Bloqueado*) y proporciona botones de acción para ver detalles y para *Bloquear* o *Habilitar* al usuario (omitiéndose el botón de bloqueo para el propio administrador logeado).
+4. **`descripcionUsuario.html`**:
+   * Ficha de datos personales protegida que muestra el perfil del usuario consultado sin revelar su contraseña.
 
 ---
 
 ## 4. Tests Automatizados Implementados
 
-Se han implementado pruebas en dos niveles distintos para asegurar la robustez de las soluciones:
-
-* **Tests de Capa de Servicio (`UsuarioServiceTest`)**:
-  * Comprobación del método `findAll()`: Verifica que tras insertar múltiples usuarios en la base de datos, el servicio devuelve la lista completa mapeada correctamente a DTOs.
-  * Comprobación de `findById()`: Verifica tanto la recuperación satisfactoria de un usuario por su ID como la respuesta nula ante identificadores que no existen.
-* **Tests de Capa Web y Controladores (`UsuarioWebTest` y `NavbarWebTest`)**:
-  * `listadoUsuariosDevuelveLista()`: Simula peticiones `GET /registrados` con `MockMvc`, mockeando el servicio para asegurar que se retorna el código de estado 200 y que los correos electrónicos se renderizan en el HTML resultante.
-  * `descripcionUsuarioDevuelveDatosUsuario()`: Comprueba que al consultar `/registrados/1` se muestra el nombre y el correo, y verifica explícitamente que la contraseña **no** aparece reflejada en el contenido devuelto.
-  * `descripcionUsuarioDevuelveNotFoundSiNoExiste()`: Verifica que ante un usuario no registrado se obtiene un código HTTP 404 Not Found.
-  * Pruebas del Navbar: Validan la presencia de los enlaces correspondientes según el estado de la sesión del usuario.
+La cobertura de pruebas abarca 55 tests automatizados distribuidos en:
+* **Entidades y Repositorios (`UsuarioTest`)**: Pruebas de persistencia y propiedades `admin` y `bloqueado`.
+* **Servicios (`UsuarioServiceTest`)**: Registro único de administrador, prevención de duplicación de administrador, bloqueo/desbloqueo de usuarios y verificación de `LoginStatus.USER_BLOCKED`.
+* **Controladores Web (`LoginWebTest`, `UsuarioWebTest`, `NavbarWebTest`)**:
+  * Redirección diferenciada tras login (administrador a `/registrados`, usuario normal a sus tareas).
+  * Renderizado condicional del checkbox de administrador en el registro.
+  * Bloqueo de acceso no autenticado (401) y no administrador (401) en `/registrados` y `/registrados/{id}`.
+  * Respuestas correctas (200) ante peticiones de administradores autenticados.
+  * Ejecución de peticiones `POST` para bloquear y desbloquear cuentas.
 
 ---
 
 ## 5. Fragmentos de Código Fuente Relevantes
 
-El siguiente fragmento de `UsuarioController.java` ilustra el control de acceso a los datos de detalle de un usuario, la integración con la sesión y la gestión limpia del error 404:
+El siguiente método en `UsuarioController.java` muestra la comprobación centralizada de autorización de administradores:
 
 ```java
-@GetMapping("/registrados/{id}")
-public String descripcionUsuario(@PathVariable(value="id") Long idUsuario, Model model) {
+private UsuarioData comprobarAdmin() {
     Long idUsuarioLogeado = managerUserSession.usuarioLogeado();
-    if (idUsuarioLogeado != null) {
-        UsuarioData usuarioLogeado = usuarioService.findById(idUsuarioLogeado);
-        model.addAttribute("usuario", usuarioLogeado);
+    if (idUsuarioLogeado == null) {
+        throw new UsuarioNoLogeadoException();
     }
-
-    UsuarioData usuarioConsultado = usuarioService.findById(idUsuario);
-    if (usuarioConsultado == null) {
-        throw new UsuarioNotFoundException();
+    UsuarioData usuario = usuarioService.findById(idUsuarioLogeado);
+    if (usuario == null || !usuario.isAdmin()) {
+        throw new UsuarioNoAutorizadoException();
     }
-
-    model.addAttribute("usuarioConsultado", usuarioConsultado);
-    return "descripcionUsuario";
+    return usuario;
 }
 ```
 
-La comprobación y lanzamiento de `UsuarioNotFoundException` permite responder con semántica REST estándar delegando en la anotación `@ResponseStatus` de Spring MVC, evitando lógica adicional de redirección o mensajes de error ad-hoc.
+Asimismo, en `UsuarioService.java` se controla el bloqueo en la autenticación:
+
+```java
+@Transactional(readOnly = true)
+public LoginStatus login(String eMail, String password) {
+    Optional<Usuario> usuario = usuarioRepository.findByEmail(eMail);
+    if (!usuario.isPresent()) {
+        return LoginStatus.USER_NOT_FOUND;
+    } else if (!usuario.get().getPassword().equals(password)) {
+        return LoginStatus.ERROR_PASSWORD;
+    } else if (usuario.get().isBloqueado()) {
+        return LoginStatus.USER_BLOCKED;
+    } else {
+        return LoginStatus.LOGIN_OK;
+    }
+}
+```
