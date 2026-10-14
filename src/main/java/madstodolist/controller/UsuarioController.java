@@ -4,6 +4,8 @@ import madstodolist.authentication.ManagerUserSession;
 import madstodolist.dto.UsuarioData;
 import madstodolist.service.UsuarioService;
 import madstodolist.controller.exception.UsuarioNotFoundException;
+import madstodolist.controller.exception.UsuarioNoLogeadoException;
+import madstodolist.controller.exception.UsuarioNoAutorizadoException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -21,13 +23,22 @@ public class UsuarioController {
     @Autowired
     private ManagerUserSession managerUserSession;
 
+    private UsuarioData comprobarAdmin() {
+        Long idUsuarioLogeado = managerUserSession.usuarioLogeado();
+        if (idUsuarioLogeado == null) {
+            throw new UsuarioNoLogeadoException();
+        }
+        UsuarioData usuario = usuarioService.findById(idUsuarioLogeado);
+        if (usuario == null || !usuario.isAdmin()) {
+            throw new UsuarioNoAutorizadoException();
+        }
+        return usuario;
+    }
+
     @GetMapping("/registrados")
     public String listadoUsuarios(Model model) {
-        Long idUsuarioLogeado = managerUserSession.usuarioLogeado();
-        if (idUsuarioLogeado != null) {
-            UsuarioData usuarioLogeado = usuarioService.findById(idUsuarioLogeado);
-            model.addAttribute("usuario", usuarioLogeado);
-        }
+        UsuarioData usuarioLogeado = comprobarAdmin();
+        model.addAttribute("usuario", usuarioLogeado);
 
         List<UsuarioData> usuarios = usuarioService.allUsuarios();
         model.addAttribute("usuarios", usuarios);
@@ -36,11 +47,8 @@ public class UsuarioController {
 
     @GetMapping("/registrados/{id}")
     public String descripcionUsuario(@PathVariable(value="id") Long idUsuario, Model model) {
-        Long idUsuarioLogeado = managerUserSession.usuarioLogeado();
-        if (idUsuarioLogeado != null) {
-            UsuarioData usuarioLogeado = usuarioService.findById(idUsuarioLogeado);
-            model.addAttribute("usuario", usuarioLogeado);
-        }
+        UsuarioData usuarioLogeado = comprobarAdmin();
+        model.addAttribute("usuario", usuarioLogeado);
 
         UsuarioData usuarioConsultado = usuarioService.findById(idUsuario);
         if (usuarioConsultado == null) {
