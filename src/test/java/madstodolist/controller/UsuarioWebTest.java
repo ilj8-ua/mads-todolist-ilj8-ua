@@ -1,5 +1,6 @@
 package madstodolist.controller;
 
+import madstodolist.authentication.ManagerUserSession;
 import madstodolist.dto.UsuarioData;
 import madstodolist.service.UsuarioService;
 import org.junit.jupiter.api.Test;
@@ -29,6 +30,9 @@ public class UsuarioWebTest {
 
     @Autowired
     private MockMvc mockMvc;
+
+    @MockBean
+    private ManagerUserSession managerUserSession;
 
     // Moqueamos el usuarioService.
     // En los tests deberemos proporcionar el valor devuelto por las llamadas
@@ -100,8 +104,36 @@ public class UsuarioWebTest {
     }
 
     @Test
-    public void listadoUsuariosDevuelveListaUsuarios() throws Exception {
+    public void listadoUsuariosSinLoginDevuelveUnauthorized() throws Exception {
+        when(managerUserSession.usuarioLogeado()).thenReturn(null);
+
+        this.mockMvc.perform(get("/registrados"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    public void listadoUsuariosNoAdminDevuelveUnauthorized() throws Exception {
+        UsuarioData noAdmin = new UsuarioData();
+        noAdmin.setId(1L);
+        noAdmin.setAdmin(false);
+
+        when(managerUserSession.usuarioLogeado()).thenReturn(1L);
+        when(usuarioService.findById(1L)).thenReturn(noAdmin);
+
+        this.mockMvc.perform(get("/registrados"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    public void listadoUsuariosAdminDevuelveListaUsuarios() throws Exception {
         // GIVEN
+        UsuarioData admin = new UsuarioData();
+        admin.setId(10L);
+        admin.setAdmin(true);
+
+        when(managerUserSession.usuarioLogeado()).thenReturn(10L);
+        when(usuarioService.findById(10L)).thenReturn(admin);
+
         UsuarioData usuario1 = new UsuarioData();
         usuario1.setId(1L);
         usuario1.setEmail("ana.garcia@gmail.com");
@@ -124,8 +156,36 @@ public class UsuarioWebTest {
     }
 
     @Test
-    public void descripcionUsuarioDevuelveDatosUsuario() throws Exception {
+    public void descripcionUsuarioSinLoginDevuelveUnauthorized() throws Exception {
+        when(managerUserSession.usuarioLogeado()).thenReturn(null);
+
+        this.mockMvc.perform(get("/registrados/1"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    public void descripcionUsuarioNoAdminDevuelveUnauthorized() throws Exception {
+        UsuarioData noAdmin = new UsuarioData();
+        noAdmin.setId(1L);
+        noAdmin.setAdmin(false);
+
+        when(managerUserSession.usuarioLogeado()).thenReturn(1L);
+        when(usuarioService.findById(1L)).thenReturn(noAdmin);
+
+        this.mockMvc.perform(get("/registrados/1"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    public void descripcionUsuarioAdminDevuelveDatosUsuario() throws Exception {
         // GIVEN
+        UsuarioData admin = new UsuarioData();
+        admin.setId(10L);
+        admin.setAdmin(true);
+
+        when(managerUserSession.usuarioLogeado()).thenReturn(10L);
+        when(usuarioService.findById(10L)).thenReturn(admin);
+
         UsuarioData anaGarcia = new UsuarioData();
         anaGarcia.setId(1L);
         anaGarcia.setNombre("Ana García");
@@ -146,8 +206,14 @@ public class UsuarioWebTest {
     }
 
     @Test
-    public void descripcionUsuarioDevuelveNotFoundSiNoExiste() throws Exception {
+    public void descripcionUsuarioAdminYNoExisteDevuelveNotFound() throws Exception {
         // GIVEN
+        UsuarioData admin = new UsuarioData();
+        admin.setId(10L);
+        admin.setAdmin(true);
+
+        when(managerUserSession.usuarioLogeado()).thenReturn(10L);
+        when(usuarioService.findById(10L)).thenReturn(admin);
         when(usuarioService.findById(999L)).thenReturn(null);
 
         // WHEN, THEN
