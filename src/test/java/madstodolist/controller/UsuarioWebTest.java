@@ -220,4 +220,49 @@ public class UsuarioWebTest {
         this.mockMvc.perform(get("/registrados/999"))
                 .andExpect(status().isNotFound());
     }
+
+    @Test
+    public void bloquearUsuarioAdminRedirigeYBloquea() throws Exception {
+        UsuarioData admin = new UsuarioData();
+        admin.setId(10L);
+        admin.setAdmin(true);
+
+        when(managerUserSession.usuarioLogeado()).thenReturn(10L);
+        when(usuarioService.findById(10L)).thenReturn(admin);
+
+        this.mockMvc.perform(post("/registrados/1/bloquear"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/registrados"));
+
+        org.mockito.Mockito.verify(usuarioService).bloquearUsuario(1L);
+    }
+
+    @Test
+    public void desbloquearUsuarioAdminRedirigeYDesbloquea() throws Exception {
+        UsuarioData admin = new UsuarioData();
+        admin.setId(10L);
+        admin.setAdmin(true);
+
+        when(managerUserSession.usuarioLogeado()).thenReturn(10L);
+        when(usuarioService.findById(10L)).thenReturn(admin);
+
+        this.mockMvc.perform(post("/registrados/1/desbloquear"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/registrados"));
+
+        org.mockito.Mockito.verify(usuarioService).desbloquearUsuario(1L);
+    }
+
+    @Test
+    public void bloquearUsuarioNoAdminDevuelveUnauthorized() throws Exception {
+        UsuarioData noAdmin = new UsuarioData();
+        noAdmin.setId(1L);
+        noAdmin.setAdmin(false);
+
+        when(managerUserSession.usuarioLogeado()).thenReturn(1L);
+        when(usuarioService.findById(1L)).thenReturn(noAdmin);
+
+        this.mockMvc.perform(post("/registrados/2/bloquear"))
+                .andExpect(status().isUnauthorized());
+    }
 }

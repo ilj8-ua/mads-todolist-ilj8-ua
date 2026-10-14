@@ -20,6 +20,7 @@
                 <tr>
                     <th>Id</th>
                     <th>Correo electrónico</th>
+                    <th>Estado</th>
                     <th>Acción</th>
                 </tr>
                 </thead>
@@ -27,8 +28,15 @@
                 <tr th:each="usuarioItem : ${usuarios}">
                     <td th:text="${usuarioItem.id}"></td>
                     <td th:text="${usuarioItem.email}"></td>
+                    <td th:text="${usuarioItem.bloqueado ? 'Bloqueado' : 'Activo'}"></td>
                     <td>
                         <a class="btn btn-primary btn-xs" th:href="@{/registrados/{id}(id=${usuarioItem.id})}">Detalles</a>
+                        <form th:if="${!usuarioItem.bloqueado and (usuario == null or usuarioItem.id != usuario.id)}" method="post" th:action="@{/registrados/{id}/bloquear(id=${usuarioItem.id})}" style="display:inline">
+                            <button type="submit" class="btn btn-danger btn-xs">Bloquear</button>
+                        </form>
+                        <form th:if="${usuarioItem.bloqueado and (usuario == null or usuarioItem.id != usuario.id)}" method="post" th:action="@{/registrados/{id}/desbloquear(id=${usuarioItem.id})}" style="display:inline">
+                            <button type="submit" class="btn btn-success btn-xs">Habilitar</button>
+                        </form>
                     </td>
                 </tr>
                 </tbody>

@@ -39,6 +39,7 @@ public class UsuarioTest {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
         usuario.setFechaNacimiento(sdf.parse("1997-02-20"));
         usuario.setAdmin(true);
+        usuario.setBloqueado(true);
 
         // THEN
         // los valores actualizados quedan guardados en el usuario y se
@@ -49,6 +50,7 @@ public class UsuarioTest {
         assertThat(usuario.getPassword()).isEqualTo("12345678");
         assertThat(usuario.getFechaNacimiento()).isEqualTo(sdf.parse("1997-02-20"));
         assertThat(usuario.isAdmin()).isTrue();
+        assertThat(usuario.isBloqueado()).isTrue();
     }
 
     @Test

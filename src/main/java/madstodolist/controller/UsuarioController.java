@@ -11,6 +11,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 
 import java.util.List;
 
@@ -57,5 +58,19 @@ public class UsuarioController {
 
         model.addAttribute("usuarioConsultado", usuarioConsultado);
         return "descripcionUsuario";
+    }
+
+    @PostMapping("/registrados/{id}/bloquear")
+    public String bloquearUsuario(@PathVariable(value="id") Long idUsuario) {
+        comprobarAdmin();
+        usuarioService.bloquearUsuario(idUsuario);
+        return "redirect:/registrados";
+    }
+
+    @PostMapping("/registrados/{id}/desbloquear")
+    public String desbloquearUsuario(@PathVariable(value="id") Long idUsuario) {
+        comprobarAdmin();
+        usuarioService.desbloquearUsuario(idUsuario);
+        return "redirect:/registrados";
     }
 }
