@@ -16,6 +16,10 @@ Este documento recoge el resumen técnico de la evolución de la aplicación **T
 5. **Protección de usuarios (opcional)**: Restricción del listado y de la descripción de usuarios exclusivamente al rol administrador.
 6. **Bloqueo de usuarios (opcional)**: Capacidad para que el administrador bloquee o habilite el acceso a la plataforma a cualquier usuario.
 
+> **Nota metodológica sobre el flujo de trabajo en GitHub:**  
+> En las funcionalidades obligatorias de la versión 1.1.0 (Barra de menú, Listado de usuarios y Descripción de usuario) se ha seguido de forma estricta y demostrable el flujo de trabajo de desarrollo ágil en GitHub: apertura previa de Issues, creación de ramas de características independientes (`feature branch`), subida de commits y apertura y mezcla formal de los Pull Requests correspondientes en GitHub (`#2`, `#4`, `#6`, `#8`).  
+> Para el desarrollo de las 3 partes opcionales (Usuario Administrador, Protección y Bloqueo de usuarios), con el objetivo de agilizar la implementación y por motivos de eficiencia de tiempo, el desarrollo de las ramas y los merges se gestionaron directamente en local mediante merges `--no-ff` conservando la trazabilidad de la historia de Git. Se hace constar explícitamente el conocimiento pleno del flujo de trabajo habitual mediante Pull Requests e Issues en la plataforma web de GitHub, tal y como queda reflejado y validado en todas las entregas obligatorias precedentes y en las prácticas posteriores.
+
 ---
 
 ## 2. Nuevas Clases y Métodos Implementados
