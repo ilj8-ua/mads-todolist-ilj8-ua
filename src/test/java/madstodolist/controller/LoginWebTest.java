@@ -77,4 +77,15 @@ public class LoginWebTest {
                 .andExpect(status().isOk())
                 .andExpect(content().string(not(containsString("Registrarse como administrador"))));
     }
+
+    @Test
+    public void loginUsuarioBloqueadoMuestraError() throws Exception {
+        when(usuarioService.login("bloqueado@ua", "123")).thenReturn(UsuarioService.LoginStatus.USER_BLOCKED);
+
+        this.mockMvc.perform(post("/login")
+                        .param("eMail", "bloqueado@ua")
+                        .param("password", "123"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("Usuario bloqueado")));
+    }
 }
