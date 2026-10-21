@@ -291,4 +291,24 @@ public class EquipoServiceTest {
         assertThatThrownBy(() -> equipoService.recuperarEquipo(equipo.getId()))
                 .isInstanceOf(EquipoServiceException.class);
     }
+
+    @Test
+    public void eliminarEquipoConUsuariosDesvinculaSinBorrarlos() {
+        // GIVEN
+        EquipoData equipo = equipoService.crearEquipo("Equipo Con Miembros");
+        UsuarioData usuario = new UsuarioData();
+        usuario.setEmail("miembro@ua");
+        usuario.setPassword("123");
+        usuario = usuarioService.registrar(usuario);
+        equipoService.añadirUsuarioAEquipo(equipo.getId(), usuario.getId());
+
+        // WHEN
+        equipoService.eliminarEquipo(equipo.getId());
+
+        // THEN
+        assertThatThrownBy(() -> equipoService.recuperarEquipo(equipo.getId()))
+                .isInstanceOf(EquipoServiceException.class);
+        UsuarioData usuarioRecuperado = usuarioService.findById(usuario.getId());
+        assertThat(usuarioRecuperado).isNotNull();
+    }
 }
