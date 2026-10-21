@@ -157,4 +157,16 @@ public class EquipoController {
             return "formEditarEquipo";
         }
     }
+
+    @PostMapping("/equipos/{id}/eliminar")
+    public String eliminarEquipo(@PathVariable(value="id") Long idEquipo, RedirectAttributes flash) {
+        comprobarAdmin();
+        try {
+            equipoService.eliminarEquipo(idEquipo);
+            flash.addFlashAttribute("mensaje", "Equipo eliminado correctamente");
+        } catch (EquipoServiceException e) {
+            flash.addFlashAttribute("error", e.getMessage());
+        }
+        return "redirect:/equipos";
+    }
 }

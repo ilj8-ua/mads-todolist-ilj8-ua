@@ -407,4 +407,105 @@ public class EquipoWebTest {
                         .param("nombre", "Proyecto Hackeado"))
                 .andExpect(status().isUnauthorized());
     }
+
+    @Test
+    public void eliminarEquipoAdminExito() throws Exception {
+        UsuarioData usuario = new UsuarioData();
+        usuario.setId(1L);
+        usuario.setAdmin(true);
+
+        when(managerUserSession.usuarioLogeado()).thenReturn(1L);
+        when(usuarioService.findById(1L)).thenReturn(usuario);
+
+        this.mockMvc.perform(post("/equipos/1/eliminar"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/equipos"))
+                .andExpect(flash().attribute("mensaje", "Equipo eliminado correctamente"));
+    }
+
+    @Test
+    public void eliminarEquipoUsuarioNormalDevuelveUnauthorized() throws Exception {
+        UsuarioData usuario = new UsuarioData();
+        usuario.setId(1L);
+        usuario.setAdmin(false);
+
+        when(managerUserSession.usuarioLogeado()).thenReturn(1L);
+        when(usuarioService.findById(1L)).thenReturn(usuario);
+
+        this.mockMvc.perform(post("/equipos/1/eliminar"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    public void eliminarEquipoSinLoginDevuelveUnauthorized() throws Exception {
+        when(managerUserSession.usuarioLogeado()).thenReturn(null);
+
+        this.mockMvc.perform(post("/equipos/1/eliminar"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    public void listadoEquiposAdminMuestraBotonesEditarYEliminar() throws Exception {
+        UsuarioData usuario = new UsuarioData();
+        usuario.setId(1L);
+        usuario.setAdmin(true);
+
+        EquipoData equipo = new EquipoData();
+        equipo.setId(1L);
+        equipo.setNombre("Proyecto Alfa");
+
+        when(managerUserSession.usuarioLogeado()).thenReturn(1L);
+        when(usuarioService.findById(1L)).thenReturn(usuario);
+        when(equipoService.findAllOrdenadoPorNombre()).thenReturn(Collections.singletonList(equipo));
+
+        this.mockMvc.perform(get("/equipos"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(allOf(
+                        containsString("href=\"/equipos/1/editar\""),
+                        containsString("action=\"/equipos/1/eliminar\"")
+                )));
+    }
+
+    @Test
+    public void listadoEquiposUsuarioNormalNoMuestraBotonesEditarYEliminar() throws Exception {
+        UsuarioData usuario = new UsuarioData();
+        usuario.setId(1L);
+        usuario.setAdmin(false);
+
+        EquipoData equipo = new EquipoData();
+        equipo.setId(1L);
+        equipo.setNombre("Proyecto Alfa");
+
+        when(managerUserSession.usuarioLogeado()).thenReturn(1L);
+        when(usuarioService.findById(1L)).thenReturn(usuario);
+        when(equipoService.findAllOrdenadoPorNombre()).thenReturn(Collections.singletonList(equipo));
+
+        this.mockMvc.perform(get("/equipos"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(org.hamcrest.Matchers.not(containsString("/equipos/1/editar"))))
+                .andExpect(content().string(org.hamcrest.Matchers.not(containsString("/equipos/1/eliminar"))));
+    }
+
+    @Test
+    public void detalleEquipoAdminMuestraBotonesEditarYEliminar() throws Exception {
+        UsuarioData usuario = new UsuarioData();
+        usuario.setId(1L);
+        usuario.setAdmin(true);
+
+        EquipoData equipo = new EquipoData();
+        equipo.setId(1L);
+        equipo.setNombre("Proyecto Alfa");
+
+        when(managerUserSession.usuarioLogeado()).thenReturn(1L);
+        when(usuarioService.findById(1L)).thenReturn(usuario);
+        when(equipoService.recuperarEquipo(1L)).thenReturn(equipo);
+        when(equipoService.usuariosEquipo(1L)).thenReturn(Collections.emptyList());
+
+        this.mockMvc.perform(get("/equipos/1"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(allOf(
+                        containsString("href=\"/equipos/1/editar\""),
+                        containsString("action=\"/equipos/1/eliminar\"")
+                )));
+    }
 }

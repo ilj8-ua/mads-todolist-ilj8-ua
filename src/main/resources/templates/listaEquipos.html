@@ -36,6 +36,10 @@
                     </td>
                     <td>
                         <a class="btn btn-primary btn-xs" th:href="@{/equipos/{id}(id=${equipoItem.id})}">Ver miembros</a>
+                        <a th:if="${usuario.admin}" class="btn btn-warning btn-xs" th:href="@{/equipos/{id}/editar(id=${equipoItem.id})}">Editar</a>
+                        <form th:if="${usuario.admin}" method="post" th:action="@{/equipos/{id}/eliminar(id=${equipoItem.id})}" style="display:inline">
+                            <button type="submit" class="btn btn-danger btn-xs" onclick="return confirm('¿Estás seguro de eliminar este equipo?')">Eliminar</button>
+                        </form>
                     </td>
                 </tr>
                 <tr th:if="${#lists.isEmpty(equipos)}">
