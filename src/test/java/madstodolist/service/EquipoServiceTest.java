@@ -270,4 +270,12 @@ public class EquipoServiceTest {
                 .isInstanceOf(EquipoServiceException.class)
                 .hasMessage("Ya existe un equipo con ese nombre");
     }
+
+    @Test
+    public void modificarEquipoMismoNombrePermitido() {
+        EquipoData equipo = equipoService.crearEquipo("Proyecto Identico");
+
+        EquipoData modificado = equipoService.modificarEquipo(equipo.getId(), "Proyecto Identico");
+        assertThat(modificado.getNombre()).isEqualTo("Proyecto Identico");
+    }
 }
