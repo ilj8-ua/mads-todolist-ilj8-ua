@@ -311,4 +311,11 @@ public class EquipoServiceTest {
         UsuarioData usuarioRecuperado = usuarioService.findById(usuario.getId());
         assertThat(usuarioRecuperado).isNotNull();
     }
+
+    @Test
+    public void eliminarEquipoNoExistenteLanzaExcepcion() {
+        assertThatThrownBy(() -> equipoService.eliminarEquipo(999L))
+                .isInstanceOf(EquipoServiceException.class)
+                .hasMessage("Equipo no encontrado");
+    }
 }
