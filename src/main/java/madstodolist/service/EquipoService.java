@@ -58,6 +58,15 @@ public class EquipoService {
         return modelMapper.map(equipo, EquipoData.class);
     }
 
+    @Transactional
+    public void eliminarEquipo(Long idEquipo) {
+        Equipo equipo = equipoRepository.findById(idEquipo).orElse(null);
+        if (equipo == null) {
+            throw new EquipoServiceException("Equipo no encontrado");
+        }
+        equipoRepository.delete(equipo);
+    }
+
     @Transactional(readOnly = true)
     public EquipoData recuperarEquipo(Long id) {
         Equipo equipo = equipoRepository.findById(id).orElse(null);

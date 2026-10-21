@@ -278,4 +278,17 @@ public class EquipoServiceTest {
         EquipoData modificado = equipoService.modificarEquipo(equipo.getId(), "Proyecto Identico");
         assertThat(modificado.getNombre()).isEqualTo("Proyecto Identico");
     }
+
+    @Test
+    public void servicioEliminarEquipo() {
+        // GIVEN
+        EquipoData equipo = equipoService.crearEquipo("Equipo A Eliminar");
+
+        // WHEN
+        equipoService.eliminarEquipo(equipo.getId());
+
+        // THEN
+        assertThatThrownBy(() -> equipoService.recuperarEquipo(equipo.getId()))
+                .isInstanceOf(EquipoServiceException.class);
+    }
 }
