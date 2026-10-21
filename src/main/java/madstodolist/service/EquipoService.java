@@ -32,6 +32,9 @@ public class EquipoService {
         if (nombre == null || nombre.trim().isEmpty()) {
             throw new EquipoServiceException("El nombre del equipo no puede ser vacío");
         }
+        if (equipoRepository.findByNombre(nombre).isPresent()) {
+            throw new EquipoServiceException("Ya existe un equipo con ese nombre");
+        }
         Equipo equipo = new Equipo(nombre);
         equipoRepository.save(equipo);
         return modelMapper.map(equipo, EquipoData.class);
