@@ -119,4 +119,40 @@ public class EquipoTest {
         // THEN
         assertThat(equipos).hasSize(2);
     }
+
+    @Test
+    public void comprobarRelacionEquipoUsuarioEliminar() {
+        // GIVEN
+        Equipo equipo = new Equipo("Proyecto P1");
+        Usuario usuario = new Usuario("user@ua");
+        equipo.addUsuario(usuario);
+
+        // WHEN
+        equipo.removeUsuario(usuario);
+
+        // THEN
+        assertThat(equipo.getUsuarios()).isEmpty();
+        assertThat(usuario.getEquipos()).isEmpty();
+    }
+
+    @Test
+    @Transactional
+    public void comprobarRelacionEquipoUsuarioEliminarEnBD() {
+        // GIVEN
+        Equipo equipo = new Equipo("Proyecto P1");
+        equipoRepository.save(equipo);
+        Usuario usuario = new Usuario("user@ua");
+        usuarioRepository.save(usuario);
+
+        equipo.addUsuario(usuario);
+
+        // WHEN
+        equipo.removeUsuario(usuario);
+
+        // THEN
+        assertThat(equipo.getUsuarios()).isEmpty();
+        assertThat(usuario.getEquipos()).isEmpty();
+        assertThat(equipoRepository.findById(equipo.getId()).orElse(null)).isNotNull();
+        assertThat(usuarioRepository.findById(usuario.getId()).orElse(null)).isNotNull();
+    }
 }

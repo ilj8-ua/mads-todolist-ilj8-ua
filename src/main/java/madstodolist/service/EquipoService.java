@@ -29,6 +29,12 @@ public class EquipoService {
 
     @Transactional
     public EquipoData crearEquipo(String nombre) {
+        if (nombre == null || nombre.trim().isEmpty()) {
+            throw new EquipoServiceException("El nombre del equipo no puede ser vacío");
+        }
+        if (equipoRepository.findByNombre(nombre).isPresent()) {
+            throw new EquipoServiceException("Ya existe un equipo con ese nombre");
+        }
         Equipo equipo = new Equipo(nombre);
         equipoRepository.save(equipo);
         return modelMapper.map(equipo, EquipoData.class);
@@ -62,7 +68,26 @@ public class EquipoService {
         if (usuario == null) {
             throw new EquipoServiceException("Usuario no encontrado");
         }
+        if (equipo.getUsuarios().contains(usuario)) {
+            throw new EquipoServiceException("El usuario ya pertenece al equipo");
+        }
         equipo.addUsuario(usuario);
+    }
+
+    @Transactional
+    public void eliminarUsuarioDeEquipo(Long idEquipo, Long idUsuario) {
+        Equipo equipo = equipoRepository.findById(idEquipo).orElse(null);
+        if (equipo == null) {
+            throw new EquipoServiceException("Equipo no encontrado");
+        }
+        Usuario usuario = usuarioRepository.findById(idUsuario).orElse(null);
+        if (usuario == null) {
+            throw new EquipoServiceException("Usuario no encontrado");
+        }
+        if (!equipo.getUsuarios().contains(usuario)) {
+            throw new EquipoServiceException("El usuario no pertenece al equipo");
+        }
+        equipo.removeUsuario(usuario);
     }
 
     @Transactional(readOnly = true)
@@ -87,5 +112,18 @@ public class EquipoService {
                 .map(equipo -> modelMapper.map(equipo, EquipoData.class))
                 .sorted(Comparator.comparing(EquipoData::getNombre))
                 .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public boolean usuarioEnEquipo(Long idEquipo, Long idUsuario) {
+        Equipo equipo = equipoRepository.findById(idEquipo).orElse(null);
+        if (equipo == null) {
+            throw new EquipoServiceException("Equipo no encontrado");
+        }
+        Usuario usuario = usuarioRepository.findById(idUsuario).orElse(null);
+        if (usuario == null) {
+            throw new EquipoServiceException("Usuario no encontrado");
+        }
+        return equipo.getUsuarios().contains(usuario);
     }
 }
