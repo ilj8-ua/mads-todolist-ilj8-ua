@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head th:replace="fragments :: head (titulo='Detalle del equipo')"></head>
+
+<body>
+<div th:replace="fragments :: navbar"></div>
+
+<div class="container-fluid mt-3">
+    <div class="row">
+        <div class="col-md-8">
+            <h2 th:text="'Equipo: ' + ${equipo.nombre}">Equipo</h2>
+
+            <div class="card mt-3">
+                <div class="card-header font-weight-bold">
+                    Participantes del equipo
+                </div>
+                <div class="card-body">
+                    <table class="table table-striped" th:if="${not #lists.isEmpty(usuarios)}">
+                        <thead>
+                        <tr>
+                            <th>Id</th>
+                            <th>Nombre</th>
+                            <th>Correo electrónico</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="usuarioItem : ${usuarios}">
+                            <td th:text="${usuarioItem.id}"></td>
+                            <td th:text="${usuarioItem.nombre != null ? usuarioItem.nombre : 'No especificado'}"></td>
+                            <td th:text="${usuarioItem.email}"></td>
+                        </tr>
+                        </tbody>
+                    </table>
+                    <p class="text-muted" th:if="${#lists.isEmpty(usuarios)}">No hay usuarios en este equipo.</p>
+                </div>
+            </div>
+
+            <div class="mt-3">
+                <a class="btn btn-secondary" href="/equipos">Volver al listado</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div th:replace="fragments::javascript"/>
+
+</body>
+</html>

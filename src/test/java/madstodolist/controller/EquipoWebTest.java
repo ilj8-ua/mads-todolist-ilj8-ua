@@ -93,4 +93,86 @@ public class EquipoWebTest {
                         containsString("No hay equipos disponibles")
                 )));
     }
+
+    @Test
+    public void detalleEquipoSinLoginDevuelveUnauthorized() throws Exception {
+        when(managerUserSession.usuarioLogeado()).thenReturn(null);
+
+        this.mockMvc.perform(get("/equipos/1"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    public void detalleEquipoNoExistenteDevuelveNotFound() throws Exception {
+        UsuarioData usuario = new UsuarioData();
+        usuario.setId(1L);
+
+        when(managerUserSession.usuarioLogeado()).thenReturn(1L);
+        when(usuarioService.findById(1L)).thenReturn(usuario);
+        when(equipoService.recuperarEquipo(999L)).thenThrow(new madstodolist.service.EquipoServiceException("Equipo no encontrado"));
+
+        this.mockMvc.perform(get("/equipos/999"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    public void detalleEquipoMuestraMiembros() throws Exception {
+        UsuarioData usuarioLogeado = new UsuarioData();
+        usuarioLogeado.setId(1L);
+        usuarioLogeado.setNombre("Ana García");
+
+        EquipoData equipo = new EquipoData();
+        equipo.setId(1L);
+        equipo.setNombre("Proyecto Alfa");
+
+        UsuarioData miembro1 = new UsuarioData();
+        miembro1.setId(1L);
+        miembro1.setNombre("Ana García");
+        miembro1.setEmail("ana@ua");
+
+        UsuarioData miembro2 = new UsuarioData();
+        miembro2.setId(2L);
+        miembro2.setNombre("Juan Pérez");
+        miembro2.setEmail("juan@ua");
+
+        when(managerUserSession.usuarioLogeado()).thenReturn(1L);
+        when(usuarioService.findById(1L)).thenReturn(usuarioLogeado);
+        when(equipoService.recuperarEquipo(1L)).thenReturn(equipo);
+        when(equipoService.usuariosEquipo(1L)).thenReturn(Arrays.asList(miembro1, miembro2));
+
+        this.mockMvc.perform(get("/equipos/1"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(allOf(
+                        containsString("Equipo: Proyecto Alfa"),
+                        containsString("Participantes del equipo"),
+                        containsString("Ana García"),
+                        containsString("ana@ua"),
+                        containsString("Juan Pérez"),
+                        containsString("juan@ua"),
+                        containsString("href=\"/equipos\"")
+                )));
+    }
+
+    @Test
+    public void detalleEquipoSinMiembrosMuestraAviso() throws Exception {
+        UsuarioData usuarioLogeado = new UsuarioData();
+        usuarioLogeado.setId(1L);
+        usuarioLogeado.setNombre("Ana García");
+
+        EquipoData equipo = new EquipoData();
+        equipo.setId(1L);
+        equipo.setNombre("Proyecto Vacío");
+
+        when(managerUserSession.usuarioLogeado()).thenReturn(1L);
+        when(usuarioService.findById(1L)).thenReturn(usuarioLogeado);
+        when(equipoService.recuperarEquipo(1L)).thenReturn(equipo);
+        when(equipoService.usuariosEquipo(1L)).thenReturn(Collections.emptyList());
+
+        this.mockMvc.perform(get("/equipos/1"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(allOf(
+                        containsString("Equipo: Proyecto Vacío"),
+                        containsString("No hay usuarios en este equipo")
+                )));
+    }
 }

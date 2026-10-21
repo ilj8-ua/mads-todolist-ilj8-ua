@@ -11,6 +11,10 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 
+import madstodolist.controller.exception.EquipoNotFoundException;
+import madstodolist.service.EquipoServiceException;
+import org.springframework.web.bind.annotation.PathVariable;
+
 import java.util.List;
 
 @Controller
@@ -45,5 +49,21 @@ public class EquipoController {
         List<EquipoData> equipos = equipoService.findAllOrdenadoPorNombre();
         model.addAttribute("equipos", equipos);
         return "listaEquipos";
+    }
+
+    @GetMapping("/equipos/{id}")
+    public String detalleEquipo(@PathVariable(value="id") Long idEquipo, Model model) {
+        UsuarioData usuarioLogeado = comprobarUsuarioLogeado();
+        model.addAttribute("usuario", usuarioLogeado);
+
+        try {
+            EquipoData equipo = equipoService.recuperarEquipo(idEquipo);
+            List<UsuarioData> usuarios = equipoService.usuariosEquipo(idEquipo);
+            model.addAttribute("equipo", equipo);
+            model.addAttribute("usuarios", usuarios);
+            return "detalleEquipo";
+        } catch (EquipoServiceException e) {
+            throw new EquipoNotFoundException();
+        }
     }
 }
