@@ -58,6 +58,8 @@ public class NavbarWebTest {
                 .andExpect(content().string(allOf(
                         containsString("ToDoList"),
                         containsString("href=\"/usuarios/1/tareas\""),
+                        containsString("href=\"/equipos\""),
+                        containsString("Equipos"),
                         containsString("Ana García"),
                         containsString("Cuenta"),
                         containsString("Cerrar sesión Ana García"),
