@@ -223,4 +223,99 @@ public class EquipoServiceTest {
         equipoService.eliminarUsuarioDeEquipo(equipo.getId(), usuario.getId());
         assertThat(equipoService.usuarioEnEquipo(equipo.getId(), usuario.getId())).isFalse();
     }
+
+    @Test
+    public void servicioModificarEquipo() {
+        // GIVEN
+        EquipoData equipo = equipoService.crearEquipo("Proyecto Original");
+
+        // WHEN
+        EquipoData modificado = equipoService.modificarEquipo(equipo.getId(), "Proyecto Renombrado");
+
+        // THEN
+        assertThat(modificado.getNombre()).isEqualTo("Proyecto Renombrado");
+        assertThat(equipoService.recuperarEquipo(equipo.getId()).getNombre()).isEqualTo("Proyecto Renombrado");
+    }
+
+    @Test
+    public void modificarEquipoNoExistenteLanzaExcepcion() {
+        assertThatThrownBy(() -> equipoService.modificarEquipo(999L, "Nuevo Nombre"))
+                .isInstanceOf(EquipoServiceException.class)
+                .hasMessage("Equipo no encontrado");
+    }
+
+    @Test
+    public void modificarEquipoNombreVacioLanzaExcepcion() {
+        EquipoData equipo = equipoService.crearEquipo("Proyecto P1");
+
+        assertThatThrownBy(() -> equipoService.modificarEquipo(equipo.getId(), null))
+                .isInstanceOf(EquipoServiceException.class)
+                .hasMessage("El nombre del equipo no puede ser vacío");
+
+        assertThatThrownBy(() -> equipoService.modificarEquipo(equipo.getId(), ""))
+                .isInstanceOf(EquipoServiceException.class)
+                .hasMessage("El nombre del equipo no puede ser vacío");
+
+        assertThatThrownBy(() -> equipoService.modificarEquipo(equipo.getId(), "   "))
+                .isInstanceOf(EquipoServiceException.class)
+                .hasMessage("El nombre del equipo no puede ser vacío");
+    }
+
+    @Test
+    public void modificarEquipoNombreYaExistenteLanzaExcepcion() {
+        equipoService.crearEquipo("Equipo A");
+        EquipoData equipoB = equipoService.crearEquipo("Equipo B");
+
+        assertThatThrownBy(() -> equipoService.modificarEquipo(equipoB.getId(), "Equipo A"))
+                .isInstanceOf(EquipoServiceException.class)
+                .hasMessage("Ya existe un equipo con ese nombre");
+    }
+
+    @Test
+    public void modificarEquipoMismoNombrePermitido() {
+        EquipoData equipo = equipoService.crearEquipo("Proyecto Identico");
+
+        EquipoData modificado = equipoService.modificarEquipo(equipo.getId(), "Proyecto Identico");
+        assertThat(modificado.getNombre()).isEqualTo("Proyecto Identico");
+    }
+
+    @Test
+    public void servicioEliminarEquipo() {
+        // GIVEN
+        EquipoData equipo = equipoService.crearEquipo("Equipo A Eliminar");
+
+        // WHEN
+        equipoService.eliminarEquipo(equipo.getId());
+
+        // THEN
+        assertThatThrownBy(() -> equipoService.recuperarEquipo(equipo.getId()))
+                .isInstanceOf(EquipoServiceException.class);
+    }
+
+    @Test
+    public void eliminarEquipoConUsuariosDesvinculaSinBorrarlos() {
+        // GIVEN
+        EquipoData equipo = equipoService.crearEquipo("Equipo Con Miembros");
+        UsuarioData usuario = new UsuarioData();
+        usuario.setEmail("miembro@ua");
+        usuario.setPassword("123");
+        usuario = usuarioService.registrar(usuario);
+        equipoService.añadirUsuarioAEquipo(equipo.getId(), usuario.getId());
+
+        // WHEN
+        equipoService.eliminarEquipo(equipo.getId());
+
+        // THEN
+        assertThatThrownBy(() -> equipoService.recuperarEquipo(equipo.getId()))
+                .isInstanceOf(EquipoServiceException.class);
+        UsuarioData usuarioRecuperado = usuarioService.findById(usuario.getId());
+        assertThat(usuarioRecuperado).isNotNull();
+    }
+
+    @Test
+    public void eliminarEquipoNoExistenteLanzaExcepcion() {
+        assertThatThrownBy(() -> equipoService.eliminarEquipo(999L))
+                .isInstanceOf(EquipoServiceException.class)
+                .hasMessage("Equipo no encontrado");
+    }
 }
