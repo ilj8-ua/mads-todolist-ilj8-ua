@@ -61,12 +61,38 @@ public class EquipoController {
         try {
             EquipoData equipo = equipoService.recuperarEquipo(idEquipo);
             List<UsuarioData> usuarios = equipoService.usuariosEquipo(idEquipo);
+            boolean esMiembro = equipoService.usuarioEnEquipo(idEquipo, usuarioLogeado.getId());
             model.addAttribute("equipo", equipo);
             model.addAttribute("usuarios", usuarios);
+            model.addAttribute("esMiembro", esMiembro);
             return "detalleEquipo";
         } catch (EquipoServiceException e) {
             throw new EquipoNotFoundException();
         }
+    }
+
+    @PostMapping("/equipos/{id}/unirse")
+    public String unirseAEquipo(@PathVariable(value="id") Long idEquipo, RedirectAttributes flash) {
+        UsuarioData usuarioLogeado = comprobarUsuarioLogeado();
+        try {
+            equipoService.añadirUsuarioAEquipo(idEquipo, usuarioLogeado.getId());
+            flash.addFlashAttribute("mensaje", "Te has unido al equipo correctamente");
+        } catch (EquipoServiceException e) {
+            flash.addFlashAttribute("error", e.getMessage());
+        }
+        return "redirect:/equipos/" + idEquipo;
+    }
+
+    @PostMapping("/equipos/{id}/salir")
+    public String salirDeEquipo(@PathVariable(value="id") Long idEquipo, RedirectAttributes flash) {
+        UsuarioData usuarioLogeado = comprobarUsuarioLogeado();
+        try {
+            equipoService.eliminarUsuarioDeEquipo(idEquipo, usuarioLogeado.getId());
+            flash.addFlashAttribute("mensaje", "Has abandonado el equipo correctamente");
+        } catch (EquipoServiceException e) {
+            flash.addFlashAttribute("error", e.getMessage());
+        }
+        return "redirect:/equipos/" + idEquipo;
     }
 
     @GetMapping("/equipos/nuevo")

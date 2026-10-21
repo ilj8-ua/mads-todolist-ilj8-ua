@@ -233,4 +233,88 @@ public class EquipoWebTest {
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString("El nombre del equipo no puede ser vacío")));
     }
+
+    @Test
+    public void detalleEquipoMuestraBotonUnirseSiNoEsMiembro() throws Exception {
+        UsuarioData usuarioLogeado = new UsuarioData();
+        usuarioLogeado.setId(1L);
+
+        EquipoData equipo = new EquipoData();
+        equipo.setId(10L);
+        equipo.setNombre("Equipo Alpha");
+
+        when(managerUserSession.usuarioLogeado()).thenReturn(1L);
+        when(usuarioService.findById(1L)).thenReturn(usuarioLogeado);
+        when(equipoService.recuperarEquipo(10L)).thenReturn(equipo);
+        when(equipoService.usuariosEquipo(10L)).thenReturn(Collections.emptyList());
+        when(equipoService.usuarioEnEquipo(10L, 1L)).thenReturn(false);
+
+        this.mockMvc.perform(get("/equipos/10"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("Unirse al equipo")));
+    }
+
+    @Test
+    public void detalleEquipoMuestraBotonSalirSiEsMiembro() throws Exception {
+        UsuarioData usuarioLogeado = new UsuarioData();
+        usuarioLogeado.setId(1L);
+
+        EquipoData equipo = new EquipoData();
+        equipo.setId(10L);
+        equipo.setNombre("Equipo Alpha");
+
+        when(managerUserSession.usuarioLogeado()).thenReturn(1L);
+        when(usuarioService.findById(1L)).thenReturn(usuarioLogeado);
+        when(equipoService.recuperarEquipo(10L)).thenReturn(equipo);
+        when(equipoService.usuariosEquipo(10L)).thenReturn(Collections.singletonList(usuarioLogeado));
+        when(equipoService.usuarioEnEquipo(10L, 1L)).thenReturn(true);
+
+        this.mockMvc.perform(get("/equipos/10"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("Salir del equipo")));
+    }
+
+    @Test
+    public void unirseAEquipoExito() throws Exception {
+        UsuarioData usuarioLogeado = new UsuarioData();
+        usuarioLogeado.setId(1L);
+
+        when(managerUserSession.usuarioLogeado()).thenReturn(1L);
+        when(usuarioService.findById(1L)).thenReturn(usuarioLogeado);
+
+        this.mockMvc.perform(post("/equipos/10/unirse"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/equipos/10"))
+                .andExpect(flash().attribute("mensaje", "Te has unido al equipo correctamente"));
+    }
+
+    @Test
+    public void unirseAEquipoSinLoginDevuelveUnauthorized() throws Exception {
+        when(managerUserSession.usuarioLogeado()).thenReturn(null);
+
+        this.mockMvc.perform(post("/equipos/10/unirse"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    public void salirDeEquipoExito() throws Exception {
+        UsuarioData usuarioLogeado = new UsuarioData();
+        usuarioLogeado.setId(1L);
+
+        when(managerUserSession.usuarioLogeado()).thenReturn(1L);
+        when(usuarioService.findById(1L)).thenReturn(usuarioLogeado);
+
+        this.mockMvc.perform(post("/equipos/10/salir"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/equipos/10"))
+                .andExpect(flash().attribute("mensaje", "Has abandonado el equipo correctamente"));
+    }
+
+    @Test
+    public void salirDeEquipoSinLoginDevuelveUnauthorized() throws Exception {
+        when(managerUserSession.usuarioLogeado()).thenReturn(null);
+
+        this.mockMvc.perform(post("/equipos/10/salir"))
+                .andExpect(status().isUnauthorized());
+    }
 }
