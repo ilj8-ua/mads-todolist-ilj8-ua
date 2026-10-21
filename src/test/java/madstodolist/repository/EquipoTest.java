@@ -155,4 +155,16 @@ public class EquipoTest {
         assertThat(equipoRepository.findById(equipo.getId()).orElse(null)).isNotNull();
         assertThat(usuarioRepository.findById(usuario.getId()).orElse(null)).isNotNull();
     }
+
+    @Test
+    public void modificarNombreEquipo() {
+        // GIVEN
+        Equipo equipo = new Equipo("Proyecto Original");
+
+        // WHEN
+        equipo.setNombre("Proyecto Modificado");
+
+        // THEN
+        assertThat(equipo.getNombre()).isEqualTo("Proyecto Modificado");
+    }
 }
