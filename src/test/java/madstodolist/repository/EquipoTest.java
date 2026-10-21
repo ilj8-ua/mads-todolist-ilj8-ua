@@ -167,4 +167,24 @@ public class EquipoTest {
         // THEN
         assertThat(equipo.getNombre()).isEqualTo("Proyecto Modificado");
     }
+
+    @Test
+    @Transactional
+    public void eliminarEquipoNoBorraUsuariosAsociados() {
+        // GIVEN
+        Equipo equipo = new Equipo("Proyecto P1");
+        equipoRepository.save(equipo);
+        Usuario usuario = new Usuario("user@ua");
+        usuarioRepository.save(usuario);
+
+        equipo.addUsuario(usuario);
+
+        // WHEN
+        equipo.removeUsuario(usuario);
+        equipoRepository.delete(equipo);
+
+        // THEN
+        assertThat(equipoRepository.findById(equipo.getId()).orElse(null)).isNull();
+        assertThat(usuarioRepository.findById(usuario.getId()).orElse(null)).isNotNull();
+    }
 }
