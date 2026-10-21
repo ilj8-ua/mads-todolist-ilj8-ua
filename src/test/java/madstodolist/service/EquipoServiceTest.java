@@ -236,4 +236,11 @@ public class EquipoServiceTest {
         assertThat(modificado.getNombre()).isEqualTo("Proyecto Renombrado");
         assertThat(equipoService.recuperarEquipo(equipo.getId()).getNombre()).isEqualTo("Proyecto Renombrado");
     }
+
+    @Test
+    public void modificarEquipoNoExistenteLanzaExcepcion() {
+        assertThatThrownBy(() -> equipoService.modificarEquipo(999L, "Nuevo Nombre"))
+                .isInstanceOf(EquipoServiceException.class)
+                .hasMessage("Equipo no encontrado");
+    }
 }
