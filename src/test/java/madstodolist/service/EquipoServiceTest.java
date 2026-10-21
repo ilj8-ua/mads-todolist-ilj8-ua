@@ -149,4 +149,18 @@ public class EquipoServiceTest {
                 .isInstanceOf(EquipoServiceException.class)
                 .hasMessage("Usuario no encontrado");
     }
+
+    @Test
+    public void eliminarUsuarioQueNoPerteneceAlEquipoLanzaExcepcion() {
+        EquipoData equipo = equipoService.crearEquipo("Proyecto P1");
+        UsuarioData usuario = new UsuarioData();
+        usuario.setEmail("user@ua");
+        usuario.setPassword("123");
+        usuario = usuarioService.registrar(usuario);
+
+        Long idUsuario = usuario.getId();
+        assertThatThrownBy(() -> equipoService.eliminarUsuarioDeEquipo(equipo.getId(), idUsuario))
+                .isInstanceOf(EquipoServiceException.class)
+                .hasMessage("El usuario no pertenece al equipo");
+    }
 }
