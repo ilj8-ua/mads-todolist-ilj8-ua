@@ -260,4 +260,14 @@ public class EquipoServiceTest {
                 .isInstanceOf(EquipoServiceException.class)
                 .hasMessage("El nombre del equipo no puede ser vacío");
     }
+
+    @Test
+    public void modificarEquipoNombreYaExistenteLanzaExcepcion() {
+        equipoService.crearEquipo("Equipo A");
+        EquipoData equipoB = equipoService.crearEquipo("Equipo B");
+
+        assertThatThrownBy(() -> equipoService.modificarEquipo(equipoB.getId(), "Equipo A"))
+                .isInstanceOf(EquipoServiceException.class)
+                .hasMessage("Ya existe un equipo con ese nombre");
+    }
 }

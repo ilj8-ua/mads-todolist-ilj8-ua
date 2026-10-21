@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -48,6 +49,10 @@ public class EquipoService {
         Equipo equipo = equipoRepository.findById(idEquipo).orElse(null);
         if (equipo == null) {
             throw new EquipoServiceException("Equipo no encontrado");
+        }
+        Optional<Equipo> equipoConMismoNombre = equipoRepository.findByNombre(nuevoNombre);
+        if (equipoConMismoNombre.isPresent() && !equipoConMismoNombre.get().getId().equals(idEquipo)) {
+            throw new EquipoServiceException("Ya existe un equipo con ese nombre");
         }
         equipo.setNombre(nuevoNombre);
         return modelMapper.map(equipo, EquipoData.class);
