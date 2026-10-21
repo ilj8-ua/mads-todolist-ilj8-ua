@@ -317,4 +317,195 @@ public class EquipoWebTest {
         this.mockMvc.perform(post("/equipos/10/salir"))
                 .andExpect(status().isUnauthorized());
     }
+
+    @Test
+    public void formEditarEquipoSinLoginDevuelveUnauthorized() throws Exception {
+        when(managerUserSession.usuarioLogeado()).thenReturn(null);
+
+        this.mockMvc.perform(get("/equipos/1/editar"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    public void formEditarEquipoUsuarioNormalDevuelveUnauthorized() throws Exception {
+        UsuarioData usuario = new UsuarioData();
+        usuario.setId(1L);
+        usuario.setAdmin(false);
+
+        when(managerUserSession.usuarioLogeado()).thenReturn(1L);
+        when(usuarioService.findById(1L)).thenReturn(usuario);
+
+        this.mockMvc.perform(get("/equipos/1/editar"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    public void formEditarEquipoAdminMuestraFormulario() throws Exception {
+        UsuarioData usuario = new UsuarioData();
+        usuario.setId(1L);
+        usuario.setAdmin(true);
+
+        EquipoData equipo = new EquipoData();
+        equipo.setId(1L);
+        equipo.setNombre("Proyecto Alfa");
+
+        when(managerUserSession.usuarioLogeado()).thenReturn(1L);
+        when(usuarioService.findById(1L)).thenReturn(usuario);
+        when(equipoService.recuperarEquipo(1L)).thenReturn(equipo);
+
+        this.mockMvc.perform(get("/equipos/1/editar"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(allOf(
+                        containsString("Modificar equipo"),
+                        containsString("value=\"Proyecto Alfa\""),
+                        containsString("Guardar cambios")
+                )));
+    }
+
+    @Test
+    public void editarEquipoAdminExito() throws Exception {
+        UsuarioData usuario = new UsuarioData();
+        usuario.setId(1L);
+        usuario.setAdmin(true);
+
+        when(managerUserSession.usuarioLogeado()).thenReturn(1L);
+        when(usuarioService.findById(1L)).thenReturn(usuario);
+
+        this.mockMvc.perform(post("/equipos/1/editar")
+                        .param("nombre", "Proyecto Alfa Renombrado"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/equipos"))
+                .andExpect(flash().attribute("mensaje", "Equipo modificado correctamente"));
+    }
+
+    @Test
+    public void editarEquipoAdminNombreVacioMuestraError() throws Exception {
+        UsuarioData usuario = new UsuarioData();
+        usuario.setId(1L);
+        usuario.setAdmin(true);
+
+        when(managerUserSession.usuarioLogeado()).thenReturn(1L);
+        when(usuarioService.findById(1L)).thenReturn(usuario);
+        when(equipoService.modificarEquipo(1L, "")).thenThrow(new madstodolist.service.EquipoServiceException("El nombre del equipo no puede ser vacío"));
+
+        this.mockMvc.perform(post("/equipos/1/editar")
+                        .param("nombre", ""))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("El nombre del equipo no puede ser vacío")));
+    }
+
+    @Test
+    public void editarEquipoUsuarioNormalDevuelveUnauthorized() throws Exception {
+        UsuarioData usuario = new UsuarioData();
+        usuario.setId(1L);
+        usuario.setAdmin(false);
+
+        when(managerUserSession.usuarioLogeado()).thenReturn(1L);
+        when(usuarioService.findById(1L)).thenReturn(usuario);
+
+        this.mockMvc.perform(post("/equipos/1/editar")
+                        .param("nombre", "Proyecto Hackeado"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    public void eliminarEquipoAdminExito() throws Exception {
+        UsuarioData usuario = new UsuarioData();
+        usuario.setId(1L);
+        usuario.setAdmin(true);
+
+        when(managerUserSession.usuarioLogeado()).thenReturn(1L);
+        when(usuarioService.findById(1L)).thenReturn(usuario);
+
+        this.mockMvc.perform(post("/equipos/1/eliminar"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/equipos"))
+                .andExpect(flash().attribute("mensaje", "Equipo eliminado correctamente"));
+    }
+
+    @Test
+    public void eliminarEquipoUsuarioNormalDevuelveUnauthorized() throws Exception {
+        UsuarioData usuario = new UsuarioData();
+        usuario.setId(1L);
+        usuario.setAdmin(false);
+
+        when(managerUserSession.usuarioLogeado()).thenReturn(1L);
+        when(usuarioService.findById(1L)).thenReturn(usuario);
+
+        this.mockMvc.perform(post("/equipos/1/eliminar"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    public void eliminarEquipoSinLoginDevuelveUnauthorized() throws Exception {
+        when(managerUserSession.usuarioLogeado()).thenReturn(null);
+
+        this.mockMvc.perform(post("/equipos/1/eliminar"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    public void listadoEquiposAdminMuestraBotonesEditarYEliminar() throws Exception {
+        UsuarioData usuario = new UsuarioData();
+        usuario.setId(1L);
+        usuario.setAdmin(true);
+
+        EquipoData equipo = new EquipoData();
+        equipo.setId(1L);
+        equipo.setNombre("Proyecto Alfa");
+
+        when(managerUserSession.usuarioLogeado()).thenReturn(1L);
+        when(usuarioService.findById(1L)).thenReturn(usuario);
+        when(equipoService.findAllOrdenadoPorNombre()).thenReturn(Collections.singletonList(equipo));
+
+        this.mockMvc.perform(get("/equipos"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(allOf(
+                        containsString("href=\"/equipos/1/editar\""),
+                        containsString("action=\"/equipos/1/eliminar\"")
+                )));
+    }
+
+    @Test
+    public void listadoEquiposUsuarioNormalNoMuestraBotonesEditarYEliminar() throws Exception {
+        UsuarioData usuario = new UsuarioData();
+        usuario.setId(1L);
+        usuario.setAdmin(false);
+
+        EquipoData equipo = new EquipoData();
+        equipo.setId(1L);
+        equipo.setNombre("Proyecto Alfa");
+
+        when(managerUserSession.usuarioLogeado()).thenReturn(1L);
+        when(usuarioService.findById(1L)).thenReturn(usuario);
+        when(equipoService.findAllOrdenadoPorNombre()).thenReturn(Collections.singletonList(equipo));
+
+        this.mockMvc.perform(get("/equipos"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(org.hamcrest.Matchers.not(containsString("/equipos/1/editar"))))
+                .andExpect(content().string(org.hamcrest.Matchers.not(containsString("/equipos/1/eliminar"))));
+    }
+
+    @Test
+    public void detalleEquipoAdminMuestraBotonesEditarYEliminar() throws Exception {
+        UsuarioData usuario = new UsuarioData();
+        usuario.setId(1L);
+        usuario.setAdmin(true);
+
+        EquipoData equipo = new EquipoData();
+        equipo.setId(1L);
+        equipo.setNombre("Proyecto Alfa");
+
+        when(managerUserSession.usuarioLogeado()).thenReturn(1L);
+        when(usuarioService.findById(1L)).thenReturn(usuario);
+        when(equipoService.recuperarEquipo(1L)).thenReturn(equipo);
+        when(equipoService.usuariosEquipo(1L)).thenReturn(Collections.emptyList());
+
+        this.mockMvc.perform(get("/equipos/1"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(allOf(
+                        containsString("href=\"/equipos/1/editar\""),
+                        containsString("action=\"/equipos/1/eliminar\"")
+                )));
+    }
 }
