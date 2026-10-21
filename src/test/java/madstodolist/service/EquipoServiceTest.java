@@ -243,4 +243,21 @@ public class EquipoServiceTest {
                 .isInstanceOf(EquipoServiceException.class)
                 .hasMessage("Equipo no encontrado");
     }
+
+    @Test
+    public void modificarEquipoNombreVacioLanzaExcepcion() {
+        EquipoData equipo = equipoService.crearEquipo("Proyecto P1");
+
+        assertThatThrownBy(() -> equipoService.modificarEquipo(equipo.getId(), null))
+                .isInstanceOf(EquipoServiceException.class)
+                .hasMessage("El nombre del equipo no puede ser vacío");
+
+        assertThatThrownBy(() -> equipoService.modificarEquipo(equipo.getId(), ""))
+                .isInstanceOf(EquipoServiceException.class)
+                .hasMessage("El nombre del equipo no puede ser vacío");
+
+        assertThatThrownBy(() -> equipoService.modificarEquipo(equipo.getId(), "   "))
+                .isInstanceOf(EquipoServiceException.class)
+                .hasMessage("El nombre del equipo no puede ser vacío");
+    }
 }

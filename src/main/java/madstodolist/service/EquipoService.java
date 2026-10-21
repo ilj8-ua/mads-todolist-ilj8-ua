@@ -42,6 +42,9 @@ public class EquipoService {
 
     @Transactional
     public EquipoData modificarEquipo(Long idEquipo, String nuevoNombre) {
+        if (nuevoNombre == null || nuevoNombre.trim().isEmpty()) {
+            throw new EquipoServiceException("El nombre del equipo no puede ser vacío");
+        }
         Equipo equipo = equipoRepository.findById(idEquipo).orElse(null);
         if (equipo == null) {
             throw new EquipoServiceException("Equipo no encontrado");
