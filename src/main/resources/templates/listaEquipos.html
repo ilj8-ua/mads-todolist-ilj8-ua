@@ -11,7 +11,12 @@
         <div class="col">
             <h2>Listado de equipos</h2>
         </div>
+        <div class="col text-right">
+            <a class="btn btn-primary" href="/equipos/nuevo">Crear nuevo equipo</a>
+        </div>
     </div>
+
+    <div th:if="${mensaje != null}" class="alert alert-success mt-2" th:text="${mensaje}"></div>
 
     <div class="row mt-3">
         <div class="col">

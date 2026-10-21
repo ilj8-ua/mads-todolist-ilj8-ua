@@ -19,7 +19,10 @@ import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.containsString;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.flash;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
@@ -174,5 +177,60 @@ public class EquipoWebTest {
                         containsString("Equipo: Proyecto Vacío"),
                         containsString("No hay usuarios en este equipo")
                 )));
+    }
+
+    @Test
+    public void formNuevoEquipoSinLoginDevuelveUnauthorized() throws Exception {
+        when(managerUserSession.usuarioLogeado()).thenReturn(null);
+
+        this.mockMvc.perform(get("/equipos/nuevo"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    public void formNuevoEquipoConLogin() throws Exception {
+        UsuarioData usuario = new UsuarioData();
+        usuario.setId(1L);
+
+        when(managerUserSession.usuarioLogeado()).thenReturn(1L);
+        when(usuarioService.findById(1L)).thenReturn(usuario);
+
+        this.mockMvc.perform(get("/equipos/nuevo"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(allOf(
+                        containsString("Crear nuevo equipo"),
+                        containsString("Nombre del equipo:"),
+                        containsString("Crear equipo")
+                )));
+    }
+
+    @Test
+    public void crearEquipoExito() throws Exception {
+        UsuarioData usuario = new UsuarioData();
+        usuario.setId(1L);
+
+        when(managerUserSession.usuarioLogeado()).thenReturn(1L);
+        when(usuarioService.findById(1L)).thenReturn(usuario);
+
+        this.mockMvc.perform(post("/equipos/nuevo")
+                        .param("nombre", "Proyecto Nuevo"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/equipos"))
+                .andExpect(flash().attribute("mensaje", "Equipo creado correctamente"));
+    }
+
+    @Test
+    public void crearEquipoNombreVacioMuestraError() throws Exception {
+        UsuarioData usuario = new UsuarioData();
+        usuario.setId(1L);
+
+        when(managerUserSession.usuarioLogeado()).thenReturn(1L);
+        when(usuarioService.findById(1L)).thenReturn(usuario);
+        when(equipoService.crearEquipo("")).thenThrow(new madstodolist.service.EquipoServiceException("El nombre del equipo no puede ser vacío"));
+
+        this.mockMvc.perform(post("/equipos/nuevo")
+                        .param("nombre", ""))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("El nombre del equipo no puede ser vacío")));
     }
 }
