@@ -223,4 +223,17 @@ public class EquipoServiceTest {
         equipoService.eliminarUsuarioDeEquipo(equipo.getId(), usuario.getId());
         assertThat(equipoService.usuarioEnEquipo(equipo.getId(), usuario.getId())).isFalse();
     }
+
+    @Test
+    public void servicioModificarEquipo() {
+        // GIVEN
+        EquipoData equipo = equipoService.crearEquipo("Proyecto Original");
+
+        // WHEN
+        EquipoData modificado = equipoService.modificarEquipo(equipo.getId(), "Proyecto Renombrado");
+
+        // THEN
+        assertThat(modificado.getNombre()).isEqualTo("Proyecto Renombrado");
+        assertThat(equipoService.recuperarEquipo(equipo.getId()).getNombre()).isEqualTo("Proyecto Renombrado");
+    }
 }
