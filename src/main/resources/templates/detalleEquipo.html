@@ -9,7 +9,20 @@
 <div class="container-fluid mt-3">
     <div class="row">
         <div class="col-md-8">
-            <h2 th:text="'Equipo: ' + ${equipo.nombre}">Equipo</h2>
+            <div th:if="${mensaje != null}" class="alert alert-success" th:text="${mensaje}"></div>
+            <div th:if="${error != null}" class="alert alert-danger" th:text="${error}"></div>
+
+            <div class="d-flex justify-content-between align-items-center">
+                <h2 th:text="'Equipo: ' + ${equipo.nombre}">Equipo</h2>
+                <div>
+                    <form th:if="${!esMiembro}" method="post" th:action="@{/equipos/{id}/unirse(id=${equipo.id})}" style="display:inline">
+                        <button type="submit" class="btn btn-success">Unirse al equipo</button>
+                    </form>
+                    <form th:if="${esMiembro}" method="post" th:action="@{/equipos/{id}/salir(id=${equipo.id})}" style="display:inline">
+                        <button type="submit" class="btn btn-danger">Salir del equipo</button>
+                    </form>
+                </div>
+            </div>
 
             <div class="card mt-3">
                 <div class="card-header font-weight-bold">
