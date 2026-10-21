@@ -2,6 +2,7 @@ package madstodolist.controller;
 
 import madstodolist.authentication.ManagerUserSession;
 import madstodolist.controller.exception.EquipoNotFoundException;
+import madstodolist.controller.exception.UsuarioNoAutorizadoException;
 import madstodolist.controller.exception.UsuarioNoLogeadoException;
 import madstodolist.dto.EquipoData;
 import madstodolist.dto.UsuarioData;
@@ -39,6 +40,14 @@ public class EquipoController {
         UsuarioData usuario = usuarioService.findById(idUsuarioLogeado);
         if (usuario == null) {
             throw new UsuarioNoLogeadoException();
+        }
+        return usuario;
+    }
+
+    private UsuarioData comprobarAdmin() {
+        UsuarioData usuario = comprobarUsuarioLogeado();
+        if (!usuario.isAdmin()) {
+            throw new UsuarioNoAutorizadoException();
         }
         return usuario;
     }
@@ -113,6 +122,39 @@ public class EquipoController {
             model.addAttribute("usuario", usuarioLogeado);
             model.addAttribute("error", e.getMessage());
             return "formNuevoEquipo";
+        }
+    }
+
+    @GetMapping("/equipos/{id}/editar")
+    public String formEditarEquipo(@PathVariable(value="id") Long idEquipo, Model model) {
+        UsuarioData usuarioLogeado = comprobarAdmin();
+        model.addAttribute("usuario", usuarioLogeado);
+
+        try {
+            EquipoData equipo = equipoService.recuperarEquipo(idEquipo);
+            model.addAttribute("equipoData", equipo);
+            return "formEditarEquipo";
+        } catch (EquipoServiceException e) {
+            throw new EquipoNotFoundException();
+        }
+    }
+
+    @PostMapping("/equipos/{id}/editar")
+    public String editarEquipo(@PathVariable(value="id") Long idEquipo,
+                               @ModelAttribute EquipoData equipoData,
+                               Model model,
+                               RedirectAttributes flash) {
+        UsuarioData usuarioLogeado = comprobarAdmin();
+        try {
+            equipoService.modificarEquipo(idEquipo, equipoData.getNombre());
+            flash.addFlashAttribute("mensaje", "Equipo modificado correctamente");
+            return "redirect:/equipos";
+        } catch (EquipoServiceException e) {
+            model.addAttribute("usuario", usuarioLogeado);
+            equipoData.setId(idEquipo);
+            model.addAttribute("equipoData", equipoData);
+            model.addAttribute("error", e.getMessage());
+            return "formEditarEquipo";
         }
     }
 }
