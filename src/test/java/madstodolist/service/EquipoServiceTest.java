@@ -133,4 +133,11 @@ public class EquipoServiceTest {
         assertThat(equipoService.usuariosEquipo(equipo.getId())).isEmpty();
         assertThat(equipoService.equiposUsuario(usuario.getId())).isEmpty();
     }
+
+    @Test
+    public void eliminarUsuarioDeEquipoNoExistenteLanzaExcepcion() {
+        assertThatThrownBy(() -> equipoService.eliminarUsuarioDeEquipo(999L, 1L))
+                .isInstanceOf(EquipoServiceException.class)
+                .hasMessage("Equipo no encontrado");
+    }
 }
