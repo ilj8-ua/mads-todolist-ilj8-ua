@@ -68,6 +68,9 @@ public class EquipoService {
         if (usuario == null) {
             throw new EquipoServiceException("Usuario no encontrado");
         }
+        if (equipo.getUsuarios().contains(usuario)) {
+            throw new EquipoServiceException("El usuario ya pertenece al equipo");
+        }
         equipo.addUsuario(usuario);
     }
 
