@@ -203,4 +203,24 @@ public class EquipoServiceTest {
                 .isInstanceOf(EquipoServiceException.class)
                 .hasMessage("El usuario ya pertenece al equipo");
     }
+
+    @Test
+    public void comprobarUsuarioEnEquipo() {
+        EquipoData equipo = equipoService.crearEquipo("Proyecto P1");
+        UsuarioData usuario = new UsuarioData();
+        usuario.setEmail("user@ua");
+        usuario.setPassword("123");
+        usuario = usuarioService.registrar(usuario);
+
+        // Antes de añadirlo, es false
+        assertThat(equipoService.usuarioEnEquipo(equipo.getId(), usuario.getId())).isFalse();
+
+        // Al añadirlo, es true
+        equipoService.añadirUsuarioAEquipo(equipo.getId(), usuario.getId());
+        assertThat(equipoService.usuarioEnEquipo(equipo.getId(), usuario.getId())).isTrue();
+
+        // Al eliminarlo, vuelve a ser false
+        equipoService.eliminarUsuarioDeEquipo(equipo.getId(), usuario.getId());
+        assertThat(equipoService.usuarioEnEquipo(equipo.getId(), usuario.getId())).isFalse();
+    }
 }
