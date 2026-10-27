@@ -1,0 +1,881 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+  <title>Guía MADS - Práctica 3: TDD y CI (v1.2.0)</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --surface: #1e293b;
+      --surface-card: #243248;
+      --border: #334155;
+      --primary: #38bdf8;
+      --primary-dark: #0284c7;
+      --accent: #a855f7;
+      --success: #22c55e;
+      --warning: #eab308;
+      --danger: #ef4444;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --code-bg: #090d16;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      padding-bottom: 80px;
+    }
+
+    /* Header & Mobile Sticky Nav */
+    header {
+      background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+      border-bottom: 1px solid var(--border);
+      padding: 20px 16px 14px 16px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(8px);
+    }
+
+    .header-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .badge-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: rgba(34, 197, 94, 0.15);
+      color: var(--success);
+      border: 1px solid rgba(34, 197, 94, 0.3);
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .badge-version {
+      background: rgba(56, 189, 248, 0.15);
+      color: var(--primary);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+    }
+
+    h1 {
+      font-size: 1.35rem;
+      font-weight: 800;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .subtitle {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    /* Search & Filter */
+    .search-box {
+      margin-top: 10px;
+      position: relative;
+    }
+
+    .search-input {
+      width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 10px 14px 10px 36px;
+      border-radius: 10px;
+      font-size: 0.9rem;
+      outline: none;
+      transition: all 0.2s;
+    }
+
+    .search-input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2);
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 0.9rem;
+      color: var(--text-muted);
+    }
+
+    /* Horizontal Category Scroll */
+    .tabs-bar {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding: 10px 16px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      scrollbar-width: none;
+    }
+    .tabs-bar::-webkit-scrollbar { display: none; }
+
+    .tab-btn {
+      white-space: nowrap;
+      background: var(--surface-card);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      transition: all 0.2s;
+    }
+
+    .tab-btn.active, .tab-btn:hover {
+      background: var(--primary);
+      color: #0f172a;
+      border-color: var(--primary);
+    }
+
+    /* Container */
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 16px;
+    }
+
+    /* Card styling */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 18px;
+      margin-bottom: 16px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25);
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .card-icon {
+      font-size: 1.4rem;
+      line-height: 1;
+    }
+
+    .card-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    /* Accordion Details (Perfect for mobile) */
+    details {
+      background: var(--surface-card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      margin-bottom: 10px;
+      overflow: hidden;
+      transition: all 0.2s;
+    }
+
+    details[open] {
+      border-color: var(--primary);
+    }
+
+    summary {
+      padding: 12px 14px;
+      font-weight: 600;
+      font-size: 0.95rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      user-select: none;
+      list-style: none;
+    }
+
+    summary::-webkit-details-marker { display: none; }
+
+    summary::after {
+      content: "➕";
+      font-size: 0.8rem;
+      color: var(--primary);
+      transition: transform 0.2s;
+    }
+
+    details[open] summary::after {
+      content: "➖";
+    }
+
+    details[open] summary {
+      background: rgba(56, 189, 248, 0.08);
+      border-bottom: 1px solid var(--border);
+      color: var(--primary);
+    }
+
+    .details-content {
+      padding: 14px;
+      font-size: 0.9rem;
+      color: #cbd5e1;
+    }
+
+    /* Code blocks */
+    pre {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px;
+      overflow-x: auto;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 0.82rem;
+      color: #e2e8f0;
+      margin: 10px 0;
+      line-height: 1.45;
+    }
+
+    code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      background: rgba(255, 255, 255, 0.08);
+      padding: 2px 5px;
+      border-radius: 4px;
+      font-size: 0.85em;
+      color: var(--primary);
+    }
+
+    /* Flashcard / QA specific */
+    .flashcard {
+      background: linear-gradient(180deg, var(--surface-card) 0%, #1e293b 100%);
+      border-left: 4px solid var(--primary);
+      border-radius: 8px;
+      padding: 14px;
+      margin-bottom: 12px;
+    }
+
+    .flashcard-q {
+      font-weight: 700;
+      color: #fff;
+      font-size: 0.95rem;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: flex-start;
+      gap: 6px;
+    }
+
+    .flashcard-a {
+      font-size: 0.9rem;
+      color: #cbd5e1;
+      line-height: 1.5;
+      background: rgba(15, 23, 42, 0.6);
+      padding: 10px 12px;
+      border-radius: 6px;
+      border: 1px solid rgba(255,255,255,0.05);
+    }
+
+    .highlight-pill {
+      display: inline-block;
+      background: rgba(168, 85, 247, 0.2);
+      color: #d8b4fe;
+      border: 1px solid rgba(168, 85, 247, 0.4);
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      margin-right: 4px;
+    }
+
+    /* Interactive Quiz */
+    .quiz-item {
+      background: var(--surface-card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px;
+      margin-bottom: 12px;
+    }
+
+    .quiz-btn {
+      background: var(--primary-dark);
+      color: #fff;
+      border: none;
+      padding: 6px 14px;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 10px;
+      transition: background 0.2s;
+    }
+
+    .quiz-btn:hover {
+      background: var(--primary);
+      color: #0f172a;
+    }
+
+    .quiz-answer {
+      display: none;
+      margin-top: 10px;
+      padding: 10px;
+      background: rgba(34, 197, 94, 0.1);
+      border-left: 3px solid var(--success);
+      border-radius: 4px;
+      font-size: 0.88rem;
+      color: #86efac;
+    }
+
+    .step-badge {
+      display: inline-block;
+      width: 22px;
+      height: 22px;
+      line-height: 22px;
+      text-align: center;
+      background: var(--primary);
+      color: #0f172a;
+      border-radius: 50%;
+      font-size: 0.75rem;
+      font-weight: 800;
+      margin-right: 6px;
+    }
+
+    /* Diagram visual block */
+    .diagram-box {
+      background: #090d16;
+      border: 1px dashed var(--border);
+      border-radius: 8px;
+      padding: 12px;
+      text-align: center;
+      font-family: monospace;
+      font-size: 0.8rem;
+      color: #38bdf8;
+      overflow-x: auto;
+      margin: 10px 0;
+    }
+
+    /* Bottom Quick Action Bar */
+    .bottom-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: rgba(15, 23, 42, 0.95);
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: space-around;
+      padding: 10px;
+      backdrop-filter: blur(8px);
+      z-index: 100;
+    }
+
+    .bottom-item {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 0.75rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+    }
+
+    .bottom-item.active {
+      color: var(--primary);
+      font-weight: 700;
+    }
+
+    /* Tag styles */
+    .tag-get { color: #38bdf8; font-weight: bold; }
+    .tag-post { color: #4ade80; font-weight: bold; }
+  </style>
+</head>
+<body>
+
+<!-- Header -->
+<header>
+  <div class="header-top">
+    <div style="display:flex; gap: 8px;">
+      <span class="badge-pill">✓ 114 Tests OK</span>
+      <span class="badge-pill badge-version">v1.2.0</span>
+    </div>
+    <span style="font-size: 0.8rem; color: var(--text-muted);">MADS • ToDoList</span>
+  </div>
+  <h1>📱 Guía de Defensa Práctica 3</h1>
+  <div class="subtitle">Todo lo que necesitas dominar para el examen y corrección</div>
+
+  <div class="search-box">
+    <span class="search-icon">🔍</span>
+    <input type="text" id="searchInput" class="search-input" placeholder="Buscar concepto (ej: postgres, hashset, 401, lazy)..." onkeyup="filterContent()">
+  </div>
+</header>
+
+<!-- Horizontal Navigation Tabs -->
+<div class="tabs-bar">
+  <button class="tab-btn active" onclick="showSection('todas')">🌐 Todo</button>
+  <button class="tab-btn" onclick="showSection('preguntas')">🎯 Preguntas Profe</button>
+  <button class="tab-btn" onclick="showSection('quiz')">🧠 Quiz Rápido</button>
+  <button class="tab-btn" onclick="showSection('ci')">⚙️ Actions / CI</button>
+  <button class="tab-btn" onclick="showSection('docker')">🐘 Docker / Postgres</button>
+  <button class="tab-btn" onclick="showSection('tdd')">🔄 TDD & Reglas</button>
+  <button class="tab-btn" onclick="showSection('h008')">📋 H008 (Equipos)</button>
+  <button class="tab-btn" onclick="showSection('h009')">👥 H009 (Pertenencia)</button>
+  <button class="tab-btn" onclick="showSection('h010')">👑 H010 (Admin)</button>
+</div>
+
+<div class="container" id="mainContainer">
+
+  <!-- ========================================== -->
+  <!-- SECCIÓN 0: CHULETA RÁPIDA (PARA EL DÍA D) -->
+  <!-- ========================================== -->
+  <section class="section-block" data-section="chuleta">
+    <div class="card" style="border-left: 4px solid var(--accent);">
+      <div class="card-header">
+        <span class="card-icon">⚡</span>
+        <div class="card-title">Chuleta Ultra-Rápida (Memoriza esto)</div>
+      </div>
+      <div style="font-size: 0.88rem; line-height: 1.6;">
+        <p>🔹 <strong>¿Cuántos tests hay?</strong> Exactamente <strong>114 tests</strong> (todos en verde).</p>
+        <p>🔹 <strong>¿Por qué 2 bases de datos?</strong> <code>mads</code> (desarrollo web) y <code>mads_test</code> (tests). Si los tests corrieran en <code>mads</code>, cada <code>./mvnw test</code> ejecutaría <code>clean-db.sql</code> y te borraría los datos de prueba.</p>
+        <p>🔹 <strong>¿Por qué NO hay @Transactional en EquipoServiceTest?</strong> Porque queremos probar el servicio tal como lo llamaría el Controller en producción (sin una sesión Hibernate artificialmente abierta por el test).</p>
+        <p>🔹 <strong>¿Por qué `new HashSet<>()` al borrar equipo?</strong> Para evitar <code>ConcurrentModificationException</code> al borrar elementos de la colección mientras se itera sobre ella.</p>
+        <p>🔹 <strong>¿Por qué LAZY en `@ManyToMany`?</strong> Para no traer a memoria todos los usuarios y sus tareas cada vez que solo consultas el nombre del equipo (evita problemas N+1 y consumo de RAM).</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================== -->
+  <!-- SECCIÓN 1: PREGUNTAS TÍPICAS DEL PROFESOR  -->
+  <!-- ========================================== -->
+  <section class="section-block" data-section="preguntas">
+    <div class="card">
+      <div class="card-header">
+        <span class="card-icon">🎯</span>
+        <div class="card-title">Preguntas Trampa del Profesor (Defensa Oral)</div>
+      </div>
+
+      <div class="flashcard">
+        <div class="flashcard-q">❓ 1. ¿Por qué en los tests de repositorio pusisteis @Transactional pero en los de servicio no?</div>
+        <div class="flashcard-a">
+          <strong>Respuesta:</strong> En los tests de repositorio (<code>EquipoTest</code>) se usa para que Hibernate mantenga abierta la sesión durante las comprobaciones de persistencia y haga <strong>rollback automático</strong> al terminar cada test. En cambio, en <code>EquipoServiceTest</code> <strong>no se debe poner</strong> porque el test debe simular el entorno real del controlador web; si pusiéramos <code>@Transactional</code> en el test, taparíamos fallos reales como que a algún método del servicio se le hubiera olvidado poner su propio <code>@Transactional</code> o accesos perezosos fuera de sesión.
+        </div>
+      </div>
+
+      <div class="flashcard">
+        <div class="flashcard-q">❓ 2. ¿Cómo evitasteis borrar los usuarios al eliminar un equipo?</div>
+        <div class="flashcard-a">
+          <strong>Respuesta:</strong> 
+          1. La relación <code>@ManyToMany</code> no tiene <code>CascadeType.REMOVE</code> ni <code>ALL</code> hacia los usuarios.<br>
+          2. En <code>eliminarEquipo()</code>, antes de llamar a <code>equipoRepository.delete(equipo)</code>, iteramos sobre los miembros y llamamos a <code>equipo.removeUsuario(usuario)</code>. Esto borra las filas de la tabla intermedia <code>equipo_usuario</code> sin tocar la tabla <code>usuarios</code>.
+        </div>
+      </div>
+
+      <div class="flashcard">
+        <div class="flashcard-q">❓ 3. ¿Por qué se usa `new HashSet<>(equipo.getUsuarios())` al desvincular?</div>
+        <div class="flashcard-a">
+          <strong>Respuesta:</strong> Si iterásemos directamente sobre <code>equipo.getUsuarios()</code> y dentro del bucle llamásemos a <code>equipo.removeUsuario()</code>, estaríamos modificando la misma colección que el iterador está recorriendo, lanzando una <code>ConcurrentModificationException</code>. Crear un <code>new HashSet<>()</code> nos da una copia defensiva para iterar de forma segura.
+        </div>
+      </div>
+
+      <div class="flashcard">
+        <div class="flashcard-q">❓ 4. ¿Por qué tenéis dos workflows en GitHub Actions?</div>
+        <div class="flashcard-a">
+          <strong>Respuesta:</strong> 
+          • <code>developer-tests.yml</code> corre con <strong>H2 en memoria</strong>: feedback ultra rápido (30 seg) para el desarrollador en cada push.<br>
+          • <code>integration-tests.yml</code> arranca un contenedor <strong>PostgreSQL 13</strong> en red con <code>services:</code> y <code>pg_isready</code>: valida que el dialecto real y la base de datos de producción funcionen antes de mezclar el Pull Request.
+        </div>
+      </div>
+
+      <div class="flashcard">
+        <div class="flashcard-q">❓ 5. Si un usuario no admin manda un POST con Postman a `/equipos/1/eliminar`, ¿qué pasa?</div>
+        <div class="flashcard-a">
+          <strong>Respuesta:</strong> El endpoint invoca el método privado <code>comprobarAdmin()</code> en <code>EquipoController</code>. Al detectar que el usuario no tiene <code>admin == true</code>, lanza <code>UsuarioNoAutorizadoException</code>, que devuelve un <strong>HTTP 401 Unauthorized</strong>. La acción se bloquea en backend independientemente de la interfaz web.
+        </div>
+      </div>
+
+      <div class="flashcard">
+        <div class="flashcard-q">❓ 6. ¿Por qué usamos DTOs (EquipoData) en lugar de pasar la entidad a la vista?</div>
+        <div class="flashcard-a">
+          <strong>Respuesta:</strong> 
+          1. Evita <code>LazyInitializationException</code> al renderizar colecciones fuera de la transacción.<br>
+          2. Evita ataques de <em>Mass Assignment</em> y fugas de datos sensibles.<br>
+          3. Desacopla la vista de los cambios en las tablas de la BD. Mapeamos con <code>ModelMapper</code>.
+        </div>
+      </div>
+
+      <div class="flashcard">
+        <div class="flashcard-q">❓ 7. ¿Por qué se usa `readOnly = true` en métodos de consulta?</div>
+        <div class="flashcard-a">
+          <strong>Respuesta:</strong> Informa a Hibernate de que no se van a modificar entidades. Hibernate desactiva el <em>dirty checking</em> (comprobación de cambios en memoria), ahorrando CPU y memoria, y optimiza la conexión en el pool.
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================== -->
+  <!-- SECCIÓN 2: TEST / QUIZ INTERACTIVO         -->
+  <!-- ========================================== -->
+  <section class="section-block" data-section="quiz">
+    <div class="card">
+      <div class="card-header">
+        <span class="card-icon">🧠</span>
+        <div class="card-title">Quiz de Autoevaluación Móvil</div>
+      </div>
+      <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 12px;">Ponte a prueba antes de la corrección. Intenta responder mentalmente antes de pulsar el botón.</p>
+
+      <div class="quiz-item">
+        <strong>1. ¿En qué orden se realiza el ciclo TDD?</strong>
+        <br><button class="quiz-btn" onclick="toggleQuiz('q1')">Ver Respuesta</button>
+        <div id="q1" class="quiz-answer">
+          <strong>Red (Escribir test que falla)</strong> ➔ <strong>Green (Escribir código mínimo que lo pasa)</strong> ➔ <strong>Refactor (Limpiar sin romper)</strong> ➔ <strong>Commit</strong>.
+        </div>
+      </div>
+
+      <div class="quiz-item">
+        <strong>2. ¿Cuántas líneas de código de producción por test se recomiendan en MADS?</strong>
+        <br><button class="quiz-btn" onclick="toggleQuiz('q2')">Ver Respuesta</button>
+        <div id="q2" class="quiz-answer">
+          Entre <strong>15 y 25 líneas</strong> de código añadidas por commit (baby steps/modularidad).
+        </div>
+      </div>
+
+      <div class="quiz-item">
+        <strong>3. ¿Qué tabla mantiene la relación Many-to-Many entre equipos y usuarios?</strong>
+        <br><button class="quiz-btn" onclick="toggleQuiz('q3')">Ver Respuesta</button>
+        <div id="q3" class="quiz-answer">
+          La tabla intermedia <code>equipo_usuario</code>, con claves foráneas <code>fk_equipo</code> y <code>fk_usuario</code>.
+        </div>
+      </div>
+
+      <div class="quiz-item">
+        <strong>4. ¿Por qué al editar un equipo se permite guardar si el nombre es el mismo que ya tenía?</strong>
+        <br><button class="quiz-btn" onclick="toggleQuiz('q4')">Ver Respuesta</button>
+        <div id="q4" class="quiz-answer">
+          Para que el usuario pueda pulsar "Guardar" sin cambiar el nombre y que el validador de nombres duplicados no salte contra el propio equipo que se está editando (Test 6 de H010).
+        </div>
+      </div>
+
+      <div class="quiz-item">
+        <strong>5. ¿Qué hace `--health-cmd pg_isready` en el workflow de Actions?</strong>
+        <br><button class="quiz-btn" onclick="toggleQuiz('q5')">Ver Respuesta</button>
+        <div id="q5" class="quiz-answer">
+          Comprueba que el motor de PostgreSQL haya completado su inicialización antes de que Maven empiece a lanzar los tests de integración, evitando errores de conexión rechazada.
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================== -->
+  <!-- SECCIÓN 3: GITHUB ACTIONS & CI             -->
+  <!-- ========================================== -->
+  <section class="section-block" data-section="ci">
+    <div class="card">
+      <div class="card-header">
+        <span class="card-icon">⚙️</span>
+        <div class="card-title">GitHub Actions y Flujos de Trabajo</div>
+      </div>
+
+      <details open>
+        <summary>developer-tests.yml (H2 en memoria)</summary>
+        <div class="details-content">
+          <p>Ubicación: <code>.github/workflows/developer-tests.yml</code></p>
+          <pre>name: Developer tests
+on: push
+jobs:
+  launch-tests:
+    runs-on: ubuntu-latest
+    container: openjdk:8-jdk-alpine
+    steps:
+      - uses: actions/checkout@v2
+      - name: Launch tests with Maven
+        run: ./mvnw test</pre>
+          <p><strong>Claves:</strong> Corre con el perfil por defecto (<code>dev</code> con H2). Muy rápido para feedback continuo.</p>
+        </div>
+      </details>
+
+      <details>
+        <summary>integration-tests.yml (PostgreSQL real)</summary>
+        <div class="details-content">
+          <p>Ubicación: <code>.github/workflows/integration-tests.yml</code></p>
+          <pre>name: Integration tests
+on: push
+jobs:
+  container-job:
+    runs-on: ubuntu-latest
+    container: openjdk:8-jdk-alpine
+    services:
+      postgres:
+        image: postgres:13
+        env:
+          POSTGRES_USER: mads
+          POSTGRES_PASSWORD: mads
+          POSTGRES_DB: mads_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v2
+      - name: Launch tests with Maven
+        run: ./mvnw test -D spring.profiles.active=postgres
+        env:
+          POSTGRES_HOST: postgres</pre>
+          <p><strong>Claves:</strong> Levanta un contenedor oficial de <code>postgres:13</code>, espera con <code>pg_isready</code> y conecta a través del host de red <code>postgres</code>.</p>
+        </div>
+      </details>
+    </div>
+  </section>
+
+  <!-- ========================================== -->
+  <!-- SECCIÓN 4: DOCKER & POSTGRESQL             -->
+  <!-- ========================================== -->
+  <section class="section-block" data-section="docker">
+    <div class="card">
+      <div class="card-header">
+        <span class="card-icon">🐘</span>
+        <div class="card-title">Docker, Perfiles y Bases de Datos</div>
+      </div>
+
+      <details open>
+        <summary>Diferencia entre perfiles y BDs</summary>
+        <div class="details-content">
+          <table style="width:100%; border-collapse:collapse; font-size:0.85rem;">
+            <tr style="border-bottom:1px solid var(--border); color:var(--primary);">
+              <th style="padding:6px; text-align:left;">Fichero</th>
+              <th style="padding:6px; text-align:left;">Base de Datos</th>
+              <th style="padding:6px; text-align:left;">Propósito</th>
+            </tr>
+            <tr style="border-bottom:1px solid var(--border);">
+              <td style="padding:6px;"><code>src/main/.../application-postgres.properties</code></td>
+              <td style="padding:6px;"><code>mads</code></td>
+              <td style="padding:6px;">Uso interactivo web en local. Los datos se mantienen.</td>
+            </tr>
+            <tr>
+              <td style="padding:6px;"><code>src/test/.../application-postgres.properties</code></td>
+              <td style="padding:6px;"><code>mads_test</code></td>
+              <td style="padding:6px;">Tests de integración. Se limpia con <code>clean-db.sql</code>.</td>
+            </tr>
+          </table>
+        </div>
+      </details>
+
+      <details>
+        <summary>Comandos Docker útiles para el examen</summary>
+        <div class="details-content">
+          <p>Crear contenedor de desarrollo:</p>
+          <pre>docker run -d -p 5432:5432 --name postgres-develop \
+  -e POSTGRES_USER=mads \
+  -e POSTGRES_PASSWORD=mads \
+  -e POSTGRES_DB=mads postgres:13</pre>
+
+          <p>Parar/Arrancar contenedor:</p>
+          <pre>docker container stop postgres-develop
+docker container start postgres-develop</pre>
+
+          <p>Lanzar la app con perfil postgres:</p>
+          <pre>./mvnw spring-boot:run -Dspring-boot.run.profiles=postgres</pre>
+        </div>
+      </details>
+    </div>
+  </section>
+
+  <!-- ========================================== -->
+  <!-- SECCIÓN 5: HISTORIAS DE USUARIO (008, 009, 010) -->
+  <!-- ========================================== -->
+  <section class="section-block" data-section="h008">
+    <div class="card">
+      <div class="card-header">
+        <span class="card-icon">📋</span>
+        <div class="card-title">Historia 008: Listado de Equipos</div>
+      </div>
+      <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:10px;">Ver todos los equipos ordenados alfabéticamente y consultar sus miembros.</p>
+
+      <details open>
+        <summary>Los 10 Tests TDD (Paso a paso)</summary>
+        <div class="details-content">
+          <p><span class="step-badge">1</span> <strong>crearEquipo:</strong> POJO con nombre y constructor.</p>
+          <p><span class="step-badge">2</span> <strong>grabarYBuscarEquipo:</strong> Entidad JPA en tabla <code>equipos</code> con ID autoincremental.</p>
+          <p><span class="step-badge">3</span> <strong>comprobarIgualdadEquipos:</strong> <code>equals()</code> y <code>hashCode()</code> por nombre sin ID o por ID.</p>
+          <p><span class="step-badge">4</span> <strong>comprobarRelacionBaseDatos:</strong> Relación <code>@ManyToMany</code> bidireccional y método <code>addUsuario()</code>.</p>
+          <p><span class="step-badge">5</span> <strong>comprobarFindAll:</strong> Declarar <code>List&lt;Equipo&gt; findAll()</code> en el repositorio.</p>
+          <p><span class="step-badge">6</span> <strong>crearRecuperarEquipo:</strong> Servicio <code>EquipoService</code> y DTO <code>EquipoData</code> mapeado con <code>ModelMapper</code>.</p>
+          <p><span class="step-badge">7</span> <strong>listadoEquiposOrdenAlfabetico:</strong> <code>findAllOrdenadoPorNombre()</code> ordenado de la A a la Z.</p>
+          <p><span class="step-badge">8</span> <strong>añadirUsuarioAEquipo:</strong> <code>añadirUsuarioAEquipo()</code> y consulta <code>usuariosEquipo()</code>.</p>
+          <p><span class="step-badge">9</span> <strong>recuperarEquiposDeUsuario:</strong> Consulta inversa <code>equiposUsuario(idUsuario)</code>.</p>
+          <p><span class="step-badge">10</span> <strong>comprobarExcepciones:</strong> Lanzar <code>EquipoServiceException</code> si ID no existe.</p>
+        </div>
+      </details>
+
+      <details>
+        <summary>Vistas y Controlador H008</summary>
+        <div class="details-content">
+          <p>• <strong>Endpoints:</strong> <span class="tag-get">GET</span> <code>/equipos</code> (lista) y <span class="tag-get">GET</span> <code>/equipos/{id}</code> (detalle miembros).</p>
+          <p>• <strong>Plantillas:</strong> <code>listaEquipos.html</code> y <code>detalleEquipo.html</code>.</p>
+          <p>• <strong>Navbar:</strong> Enlace a "Equipos" en <code>fragments.html</code>.</p>
+        </div>
+      </details>
+    </div>
+  </section>
+
+  <section class="section-block" data-section="h009">
+    <div class="card">
+      <div class="card-header">
+        <span class="card-icon">👥</span>
+        <div class="card-title">Historia 009: Pertenencia a Equipos</div>
+      </div>
+      <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:10px;">Crear equipos nuevos y poder unirse o salirse de ellos.</p>
+
+      <details open>
+        <summary>Los 10 Tests TDD (Paso a paso)</summary>
+        <div class="details-content">
+          <p><span class="step-badge">1</span> <strong>removeUsuario en memoria:</strong> Sincronizar ambos lados de la relación.</p>
+          <p><span class="step-badge">2</span> <strong>removeUsuario en BD:</strong> Se borra la fila en <code>equipo_usuario</code>.</p>
+          <p><span class="step-badge">3</span> <strong>eliminarUsuarioDeEquipo en servicio:</strong> Método del servicio para salirse.</p>
+          <p><span class="step-badge">4</span> <strong>Excepción no miembro:</strong> Error si intentas salir de un equipo al que no perteneces.</p>
+          <p><span class="step-badge">5</span> <strong>Excepción no existe:</strong> Error si el equipo o usuario no existen al salir.</p>
+          <p><span class="step-badge">6</span> <strong>Validación nombre vacío:</strong> No se puede crear un equipo sin nombre.</p>
+          <p><span class="step-badge">7</span> <strong>Validación nombre duplicado:</strong> No puede haber 2 equipos con el mismo nombre.</p>
+          <p><span class="step-badge">8</span> <strong>Excepción añadir inexistente:</strong> Error al añadir usuario que no existe.</p>
+          <p><span class="step-badge">9</span> <strong>Excepción ya miembro:</strong> Error si intentas añadir a alguien que ya está en el equipo.</p>
+          <p><span class="step-badge">10</span> <strong>usuarioEnEquipo:</strong> Método booleano para saber si el usuario está dentro.</p>
+        </div>
+      </details>
+
+      <details>
+        <summary>Vistas y Controlador H009</summary>
+        <div class="details-content">
+          <p>• <span class="tag-get">GET</span> / <span class="tag-post">POST</span> <code>/equipos/nuevo</code>: Formulario de creación (<code>formNuevoEquipo.html</code>).</p>
+          <p>• <span class="tag-post">POST</span> <code>/equipos/{id}/unirse</code>: Botón verde "Unirse al equipo".</p>
+          <p>• <span class="tag-post">POST</span> <code>/equipos/{id}/salir</code>: Botón rojo "Salir del equipo".</p>
+        </div>
+      </details>
+    </div>
+  </section>
+
+  <section class="section-block" data-section="h010">
+    <div class="card">
+      <div class="card-header">
+        <span class="card-icon">👑</span>
+        <div class="card-title">Historia 010: Gestión de Administrador</div>
+      </div>
+      <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:10px;">Solo los administradores pueden editar el nombre o eliminar equipos.</p>
+
+      <details open>
+        <summary>Los 10 Tests TDD (Paso a paso)</summary>
+        <div class="details-content">
+          <p><span class="step-badge">1</span> <strong>setNombre en entidad:</strong> Setter del nombre en <code>Equipo</code>.</p>
+          <p><span class="step-badge">2</span> <strong>modificarEquipo en servicio:</strong> Cambiar el nombre en la base de datos.</p>
+          <p><span class="step-badge">3</span> <strong>Excepción modificar no existe:</strong> Error si el equipo a editar no existe.</p>
+          <p><span class="step-badge">4</span> <strong>Validación nombre vacío al editar:</strong> No se permite dejar el nombre vacío.</p>
+          <p><span class="step-badge">5</span> <strong>Validación nombre duplicado al editar:</strong> No se permite usar el nombre de otro equipo.</p>
+          <p><span class="step-badge">6</span> <strong>Permitir mismo nombre:</strong> Si no cambias el nombre, no debe dar error de duplicado.</p>
+          <p><span class="step-badge">7</span> <strong>Eliminar en BD no borra usuarios:</strong> Los usuarios siguen existiendo tras borrar el equipo.</p>
+          <p><span class="step-badge">8</span> <strong>eliminarEquipo en servicio:</strong> Método para borrar equipo.</p>
+          <p><span class="step-badge">9</span> <strong>Desvinculación con new HashSet:</strong> Limpiar la tabla <code>equipo_usuario</code> antes del <code>delete()</code>.</p>
+          <p><span class="step-badge">10</span> <strong>Excepción eliminar no existe:</strong> Error si el equipo a borrar no existe.</p>
+        </div>
+      </details>
+
+      <details>
+        <summary>Seguridad en Backend y Vistas H010</summary>
+        <div class="details-content">
+          <p>• <strong>Seguridad Backend:</strong> Método <code>comprobarAdmin()</code> lanza <code>UsuarioNoAutorizadoException</code> (HTTP 401).</p>
+          <p>• <strong>Endpoints:</strong> <span class="tag-get">GET</span> / <span class="tag-post">POST</span> <code>/equipos/{id}/editar</code> y <span class="tag-post">POST</span> <code>/equipos/{id}/eliminar</code>.</p>
+          <p>• <strong>Plantilla:</strong> <code>formEditarEquipo.html</code>.</p>
+          <p>• <strong>Vistas adaptativas:</strong> Botones de Editar y Eliminar condicionados a <code>th:if="${usuario.admin}"</code>.</p>
+        </div>
+      </details>
+    </div>
+  </section>
+
+</div>
+
+<!-- Bottom Fixed Mobile Navigation -->
+<nav class="bottom-bar">
+  <a href="#mainContainer" class="bottom-item active" onclick="showSection('todas')">
+    <span>🌐</span>
+    <span>Inicio</span>
+  </a>
+  <a href="#mainContainer" class="bottom-item" onclick="showSection('preguntas')">
+    <span>🎯</span>
+    <span>Preguntas</span>
+  </a>
+  <a href="#mainContainer" class="bottom-item" onclick="showSection('quiz')">
+    <span>🧠</span>
+    <span>Quiz</span>
+  </a>
+  <a href="#mainContainer" class="bottom-item" onclick="showSection('h010')">
+    <span>👑</span>
+    <span>Admin</span>
+  </a>
+</nav>
+
+<script>
+  function toggleQuiz(id) {
+    const el = document.getElementById(id);
+    if (el.style.display === 'block') {
+      el.style.display = 'none';
+    } else {
+      el.style.display = 'block';
+    }
+  }
+
+  function showSection(sec) {
+    const sections = document.querySelectorAll('.section-block');
+    const tabs = document.querySelectorAll('.tab-btn');
+    
+    // Update active tab button
+    tabs.forEach(tab => tab.classList.remove('active'));
+    event.target.classList.add('active');
+
+    sections.forEach(block => {
+      if (sec === 'todas') {
+        block.style.display = 'block';
+      } else {
+        if (block.getAttribute('data-section') === sec || block.getAttribute('data-section') === 'chuleta') {
+          block.style.display = 'block';
+        } else {
+          block.style.display = 'none';
+        }
+      }
+    });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function filterContent() {
+    const input = document.getElementById('searchInput').value.toLowerCase();
+    const cards = document.querySelectorAll('.card, .flashcard, .quiz-item');
+
+    cards.forEach(card => {
+      const text = card.innerText.toLowerCase();
+      if (text.includes(input)) {
+        card.style.display = '';
+      } else {
+        card.style.display = 'none';
+      }
+    });
+  }
+</script>
+
+</body>
+</html>
